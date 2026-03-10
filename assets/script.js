@@ -5,6 +5,7 @@ const TAU = Math.PI * 2;
 
 let viewWidth = window.innerWidth;
 let viewHeight = window.innerHeight;
+let lastTimestamp = performance.now();
 
 const waves = [
   {
@@ -79,26 +80,35 @@ function formatValue(key, value) {
   return String(Math.round(value));
 }
 
+function sampleWavePhase(wave, x, time) {
+  return ((x + wave.xOffset) / wave.wavelength) * TAU + time * wave.speed;
+}
+
 function sampleWaveY(wave, x, time) {
-  const phase = ((x + wave.xOffset) / wave.wavelength) * TAU + time * wave.speed;
+  const phase = sampleWavePhase(wave, x, time);
   return viewHeight * 0.5 + wave.yOffset + Math.sin(phase) * wave.amplitude;
 }
 
-function resetParticle(particle, wave, time, rightSide = true) {
-  particle.x = rightSide ? viewWidth + Math.random() * 100 : Math.random() * viewWidth;
-  const targetY = sampleWaveY(wave, particle.x, time);
-  particle.y = targetY + (Math.random() - 0.5) * 28;
-  particle.vx = -(0.16 + Math.random() * 0.24);
-  particle.vy = (Math.random() - 0.5) * 0.3;
-  particle.size = 0.8 + Math.random() * 2.1;
-  particle.alpha = 0.2 + Math.random() * 0.65;
+function sampleWaveSlope(wave, x, time) {
+  const phase = sampleWavePhase(wave, x, time);
+  return Math.cos(phase) * wave.amplitude * (TAU / wave.wavelength);
 }
 
-function syncParticleCount(wave, time) {
+function resetParticle(particle, wave, rightSide = true) {
+  particle.anchorX = rightSide ? viewWidth + Math.random() * 140 : Math.random() * viewWidth;
+  particle.orbitAngle = Math.random() * TAU;
+  particle.orbitSpeed = 0.9 + Math.random() * 1.8;
+  particle.orbitRadius = 4 + Math.random() * 18;
+  particle.driftScale = 0.7 + Math.random() * 0.8;
+  particle.size = 0.8 + Math.random() * 2;
+  particle.alpha = 0.26 + Math.random() * 0.52;
+}
+
+function syncParticleCount(wave) {
   const target = Math.max(0, Math.round(wave.particleCount));
   while (wave.particles.length < target) {
     const particle = {};
-    resetParticle(particle, wave, time, false);
+    resetParticle(particle, wave, false);
     wave.particles.push(particle);
   }
   if (wave.particles.length > target) {
@@ -141,7 +151,7 @@ function createControls() {
         wave[spec.key] = nextValue;
         label.lastElementChild.textContent = formatValue(spec.key, nextValue);
         if (spec.key === "particleCount") {
-          syncParticleCount(wave, performance.now() * 0.001);
+          syncParticleCount(wave);
         }
       });
 
@@ -166,39 +176,46 @@ function drawWave(wave, time) {
     }
   }
 
-  ctx.lineWidth = 2;
+  ctx.lineWidth = 2.2;
   ctx.strokeStyle = wave.color;
-  ctx.globalAlpha = 0.92;
+  ctx.globalAlpha = 0.95;
   ctx.stroke();
   ctx.globalAlpha = 1;
 }
 
-function updateAndDrawParticles(wave, time) {
+function updateAndDrawParticles(wave, time, deltaSeconds) {
   const rgb = wave.rgb;
-  const attractStrength = 0.022;
-  const desiredVx = -(0.24 + wave.speed * 0.85);
+  const baseFlow = 36 + wave.speed * 120;
 
   for (let i = 0; i < wave.particles.length; i += 1) {
     const particle = wave.particles[i];
-    const targetY = sampleWaveY(wave, particle.x, time);
+    particle.anchorX -= baseFlow * particle.driftScale * deltaSeconds;
+    particle.orbitAngle += particle.orbitSpeed * deltaSeconds;
 
-    particle.vy += (targetY - particle.y) * attractStrength;
-    particle.vy *= 0.9;
-    particle.vx += (desiredVx - particle.vx) * 0.05;
+    const baseY = sampleWaveY(wave, particle.anchorX, time);
+    const slope = sampleWaveSlope(wave, particle.anchorX, time);
+    const tangentLength = Math.hypot(1, slope);
+    const tangentX = 1 / tangentLength;
+    const tangentY = slope / tangentLength;
+    const normalX = -tangentY;
+    const normalY = tangentX;
 
-    particle.x += particle.vx;
-    particle.y += particle.vy;
+    const sinOrbit = Math.sin(particle.orbitAngle);
+    const cosOrbit = Math.cos(particle.orbitAngle);
+    const radius = particle.orbitRadius;
+    const tangentStretch = radius * 0.45;
 
-    if (particle.x < -30) {
-      resetParticle(particle, wave, time, true);
-    } else if (particle.y < -120 || particle.y > viewHeight + 120) {
-      particle.y = targetY + (Math.random() - 0.5) * 18;
-      particle.vy *= 0.4;
+    const px = particle.anchorX + normalX * sinOrbit * radius + tangentX * cosOrbit * tangentStretch;
+    const py = baseY + normalY * sinOrbit * radius + tangentY * cosOrbit * tangentStretch;
+
+    if (particle.anchorX < -190) {
+      resetParticle(particle, wave, true);
+      continue;
     }
 
     ctx.beginPath();
     ctx.fillStyle = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${particle.alpha})`;
-    ctx.arc(particle.x, particle.y, particle.size, 0, TAU);
+    ctx.arc(px, py, particle.size, 0, TAU);
     ctx.fill();
   }
 }
@@ -217,10 +234,12 @@ function resizeCanvas() {
 }
 
 function render(timestamp) {
+  const deltaSeconds = Math.min(0.05, (timestamp - lastTimestamp) * 0.001 || 0.016);
+  lastTimestamp = timestamp;
   const time = timestamp * 0.001;
 
   ctx.clearRect(0, 0, viewWidth, viewHeight);
-  ctx.fillStyle = "#070b18";
+  ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, 0, viewWidth, viewHeight);
 
   for (let i = 0; i < waves.length; i += 1) {
@@ -228,7 +247,7 @@ function render(timestamp) {
   }
 
   for (let i = 0; i < waves.length; i += 1) {
-    updateAndDrawParticles(waves[i], time);
+    updateAndDrawParticles(waves[i], time, deltaSeconds);
   }
 
   requestAnimationFrame(render);
@@ -242,7 +261,7 @@ createControls();
 resizeCanvas();
 
 for (let i = 0; i < waves.length; i += 1) {
-  syncParticleCount(waves[i], performance.now() * 0.001);
+  syncParticleCount(waves[i]);
 }
 
 window.addEventListener("resize", resizeCanvas);
