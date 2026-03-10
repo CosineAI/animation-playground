@@ -14,6 +14,7 @@ const waves = [
     amplitude: 72,
     wavelength: 380,
     speed: 0.22,
+    glow: 16,
     particleCount: 90,
     xOffset: 0,
     yOffset: -55,
@@ -25,6 +26,7 @@ const waves = [
     amplitude: 58,
     wavelength: 300,
     speed: 0.16,
+    glow: 14,
     particleCount: 75,
     xOffset: 36,
     yOffset: -16,
@@ -36,6 +38,7 @@ const waves = [
     amplitude: 45,
     wavelength: 450,
     speed: 0.1,
+    glow: 12,
     particleCount: 65,
     xOffset: -48,
     yOffset: 22,
@@ -47,6 +50,7 @@ const waves = [
     amplitude: 35,
     wavelength: 260,
     speed: 0.06,
+    glow: 10,
     particleCount: 55,
     xOffset: 72,
     yOffset: 58,
@@ -58,6 +62,7 @@ const controlSpecs = [
   { key: "amplitude", label: "Amplitude", min: 10, max: 220, step: 1, integer: true },
   { key: "wavelength", label: "Wavelength", min: 80, max: 900, step: 1, integer: true },
   { key: "speed", label: "Movement Speed", min: 0.02, max: 1.2, step: 0.01, integer: false },
+  { key: "glow", label: "Glow", min: 0, max: 40, step: 1, integer: true },
   { key: "particleCount", label: "Particles", min: 0, max: 300, step: 1, integer: true },
   { key: "yOffset", label: "Y Translation", min: -350, max: 350, step: 1, integer: true },
   { key: "xOffset", label: "X Translation", min: -700, max: 700, step: 1, integer: true }
@@ -176,11 +181,23 @@ function drawWave(wave, time) {
     }
   }
 
-  ctx.lineWidth = 2.2;
+  ctx.save();
   ctx.strokeStyle = wave.color;
-  ctx.globalAlpha = 0.95;
+  ctx.lineJoin = "round";
+  ctx.lineCap = "round";
+
+  ctx.lineWidth = 2.6;
+  ctx.globalAlpha = 0.36;
+  ctx.shadowColor = wave.color;
+  ctx.shadowBlur = wave.glow;
   ctx.stroke();
-  ctx.globalAlpha = 1;
+
+  ctx.lineWidth = 1.2;
+  ctx.globalAlpha = 0.26;
+  ctx.shadowBlur = 0;
+  ctx.stroke();
+
+  ctx.restore();
 }
 
 function updateAndDrawParticles(wave, time, deltaSeconds) {
