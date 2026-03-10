@@ -20,6 +20,23 @@ body {
   display: block;
 }
 
+#controls-toggle {
+  position: fixed;
+  top: 0.9rem;
+  right: 0.9rem;
+  z-index: 30;
+  border: 1px solid rgba(70, 78, 110, 0.35);
+  background: rgba(255, 255, 255, 0.88);
+  color: #2b3350;
+  border-radius: 999px;
+  padding: 0.4rem 0.85rem;
+  font-size: 0.74rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+}
+
 #controls {
   position: fixed;
   left: 0;
@@ -39,6 +56,14 @@ body {
     rgba(255, 255, 255, 0.96) 100%
   );
   backdrop-filter: blur(6px);
+  z-index: 20;
+  transition: transform 180ms ease, opacity 180ms ease;
+}
+
+body.controls-hidden #controls {
+  transform: translateY(calc(100% + 1.2rem));
+  opacity: 0;
+  pointer-events: none;
 }
 
 .wave-panel {

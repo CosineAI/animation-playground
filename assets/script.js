@@ -1,11 +1,13 @@
 const canvas = document.getElementById("scene");
 const ctx = canvas.getContext("2d");
 const controlsRoot = document.getElementById("controls");
+const controlsToggleButton = document.getElementById("controls-toggle");
 const TAU = Math.PI * 2;
 
 let viewWidth = window.innerWidth;
 let viewHeight = window.innerHeight;
 let lastTimestamp = performance.now();
+let controlsVisible = true;
 
 const waves = [
   {
@@ -14,7 +16,7 @@ const waves = [
     amplitude: 72,
     wavelength: 380,
     speed: 0.22,
-    glow: 16,
+    glow: 18,
     particleCount: 90,
     xOffset: 0,
     yOffset: -55,
@@ -26,7 +28,7 @@ const waves = [
     amplitude: 58,
     wavelength: 300,
     speed: 0.16,
-    glow: 14,
+    glow: 15,
     particleCount: 75,
     xOffset: 36,
     yOffset: -16,
@@ -38,7 +40,7 @@ const waves = [
     amplitude: 45,
     wavelength: 450,
     speed: 0.1,
-    glow: 12,
+    glow: 13,
     particleCount: 65,
     xOffset: -48,
     yOffset: 22,
@@ -62,7 +64,7 @@ const controlSpecs = [
   { key: "amplitude", label: "Amplitude", min: 10, max: 220, step: 1, integer: true },
   { key: "wavelength", label: "Wavelength", min: 80, max: 900, step: 1, integer: true },
   { key: "speed", label: "Movement Speed", min: 0.02, max: 1.2, step: 0.01, integer: false },
-  { key: "glow", label: "Glow", min: 0, max: 40, step: 1, integer: true },
+  { key: "glow", label: "Glow", min: 0, max: 60, step: 1, integer: true },
   { key: "particleCount", label: "Particles", min: 0, max: 300, step: 1, integer: true },
   { key: "yOffset", label: "Y Translation", min: -350, max: 350, step: 1, integer: true },
   { key: "xOffset", label: "X Translation", min: -700, max: 700, step: 1, integer: true }
@@ -121,6 +123,13 @@ function syncParticleCount(wave) {
   }
 }
 
+function setControlsVisibility(visible) {
+  controlsVisible = visible;
+  document.body.classList.toggle("controls-hidden", !visible);
+  controlsToggleButton.textContent = visible ? "Hide Controls" : "Show Controls";
+  controlsToggleButton.setAttribute("aria-expanded", String(visible));
+}
+
 function createControls() {
   controlsRoot.innerHTML = "";
 
@@ -169,9 +178,8 @@ function createControls() {
   });
 }
 
-function drawWave(wave, time) {
+function traceWavePath(wave, time) {
   ctx.beginPath();
-
   for (let x = 0; x <= viewWidth; x += 3) {
     const y = sampleWaveY(wave, x, time);
     if (x === 0) {
@@ -180,24 +188,27 @@ function drawWave(wave, time) {
       ctx.lineTo(x, y);
     }
   }
+}
 
-  ctx.save();
+function drawWave(wave, time) {
+  traceWavePath(wave, time);
+  ctx.lineWidth = 6;
   ctx.strokeStyle = wave.color;
-  ctx.lineJoin = "round";
-  ctx.lineCap = "round";
-
-  ctx.lineWidth = 2.6;
-  ctx.globalAlpha = 0.36;
+  ctx.globalAlpha = 0.28;
   ctx.shadowColor = wave.color;
   ctx.shadowBlur = wave.glow;
   ctx.stroke();
 
-  ctx.lineWidth = 1.2;
-  ctx.globalAlpha = 0.26;
-  ctx.shadowBlur = 0;
+  traceWavePath(wave, time);
+  ctx.lineWidth = 1.8;
+  ctx.strokeStyle = wave.color;
+  ctx.globalAlpha = 0.9;
+  ctx.shadowBlur = Math.max(0, wave.glow * 0.4);
   ctx.stroke();
 
-  ctx.restore();
+  ctx.globalAlpha = 1;
+  ctx.shadowBlur = 0;
+  ctx.shadowColor = "transparent";
 }
 
 function updateAndDrawParticles(wave, time, deltaSeconds) {
@@ -280,6 +291,12 @@ resizeCanvas();
 for (let i = 0; i < waves.length; i += 1) {
   syncParticleCount(waves[i]);
 }
+
+controlsToggleButton.addEventListener("click", () => {
+  setControlsVisibility(!controlsVisible);
+});
+
+setControlsVisibility(true);
 
 window.addEventListener("resize", resizeCanvas);
 requestAnimationFrame(render);
