@@ -552,12 +552,7 @@ function createSpinningParticlesProject() {
         ctx.fill();
       }
 
-      if (explodeStrength > 0.001) {
-        ctx.beginPath();
-        ctx.fillStyle = `rgba(0, 0, 0, ${0.02 * explodeStrength})`;
-        ctx.arc(cx, cy, baseRadius * (0.12 + explodeStrength * 0.55), 0, TAU);
-        ctx.fill();
-      }
+      
     }
   };
 }
