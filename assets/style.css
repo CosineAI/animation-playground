@@ -20,6 +20,42 @@ body {
   display: block;
 }
 
+#project-bar {
+  position: fixed;
+  top: 0.9rem;
+  left: 0.9rem;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  border: 1px solid rgba(70, 78, 110, 0.35);
+  background: rgba(255, 255, 255, 0.88);
+  border-radius: 999px;
+  padding: 0.4rem 0.75rem;
+  backdrop-filter: blur(6px);
+}
+
+#project-bar label {
+  font-size: 0.74rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: #2b3350;
+}
+
+#project-select {
+  border: none;
+  background: transparent;
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: #2b3350;
+  padding: 0.15rem 0.2rem;
+  cursor: pointer;
+}
+
+#project-select:focus {
+  outline: none;
+}
+
 #controls-toggle {
   position: fixed;
   top: 0.9rem;
@@ -35,6 +71,11 @@ body {
   letter-spacing: 0.01em;
   cursor: pointer;
   backdrop-filter: blur(6px);
+}
+
+#controls-toggle:disabled {
+  opacity: 0.55;
+  cursor: default;
 }
 
 #controls {

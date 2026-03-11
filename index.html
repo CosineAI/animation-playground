@@ -3,13 +3,19 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Sine Field</title>
+  <title>Animation Playground</title>
   <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
   <canvas id="scene"></canvas>
+
+  <header id="project-bar" aria-label="Animation picker">
+    <label for="project-select">Animation</label>
+    <select id="project-select"></select>
+  </header>
+
   <button id="controls-toggle" type="button" aria-expanded="true" aria-controls="controls">Hide Controls</button>
-  <section id="controls" aria-label="Wave controls"></section>
+  <section id="controls" aria-label="Animation controls"></section>
   <script src="assets/script.js"></script>
 </body>
 </html>
