@@ -499,7 +499,7 @@ function createSpinningParticlesProject() {
       inwardVelocity *= Math.exp(-deltaSeconds * 5.4);
       const explodeStrength = getExplodeStrength();
       const targetFactor = 1 + explodeStrength * 2.15;
-      rotationVelocity += (0.45 - rotationVelocity) * (1 - Math.exp(-deltaSeconds * 1.8));
+      rotationVelocity += (0.45 - rotationVelocity) * (1 - Math.exp(-deltaSeconds * 0.08));
       rotation += deltaSeconds * (rotationVelocity + explodeStrength * 0.2);
 
       ctx.clearRect(0, 0, viewWidth, viewHeight);
