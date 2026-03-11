@@ -333,16 +333,40 @@ function createSpinningParticlesProject() {
   let mouseX = 0;
   let mouseY = 0;
   let mouseActive = false;
+  let lastPointerTime = performance.now();
+  let lastPointerDistance = null;
+  let approachEnergy = 0;
 
   function onPointerMove(event) {
+    const now = performance.now();
+    const dt = Math.max(0.001, (now - lastPointerTime) * 0.001);
+    lastPointerTime = now;
+
     const rect = canvas.getBoundingClientRect();
     mouseX = event.clientX - rect.left;
     mouseY = event.clientY - rect.top;
+
+    const cx = viewWidth * 0.5;
+    const cy = viewHeight * 0.5;
+    const distanceToCenter = Math.hypot(mouseX - cx, mouseY - cy);
+
+    if (lastPointerDistance !== null) {
+      const radialSpeed = (lastPointerDistance - distanceToCenter) / dt;
+      if (radialSpeed > 0) {
+        approachEnergy = clamp(approachEnergy + radialSpeed * 0.0018, 0, 1.8);
+      } else {
+        approachEnergy = Math.max(0, approachEnergy + radialSpeed * 0.0007);
+      }
+    }
+
+    lastPointerDistance = distanceToCenter;
     mouseActive = true;
   }
 
   function onPointerLeave() {
     mouseActive = false;
+    lastPointerDistance = null;
+    approachEnergy = 0;
   }
 
   function seedParticles() {
@@ -369,7 +393,11 @@ function createSpinningParticlesProject() {
         size: 0.85 + Math.random() * 1.8,
         alpha: tint.alpha,
         rgb: tint.rgb,
+        inertia: 0.7 + Math.random() * 0.8,
+        spring: 7 + Math.random() * 6,
+        drag: 3.8 + Math.random() * 2.8,
         radiusFactor: 1,
+        radiusVelocity: 0,
         depth: 0
       });
     }
@@ -385,7 +413,9 @@ function createSpinningParticlesProject() {
     const maxDist = Math.max(1, Math.min(viewWidth, viewHeight) * 0.5);
     const dist = Math.hypot(mouseX - cx, mouseY - cy);
     const t = 1 - clamp(dist / maxDist, 0, 1);
-    return t * t;
+    const distanceStrength = t * t;
+    const motionBoost = clamp(approachEnergy, 0, 1.5);
+    return clamp(distanceStrength * (1 + motionBoost), 0, 2);
   }
 
   seedParticles();
@@ -398,6 +428,8 @@ function createSpinningParticlesProject() {
       canvas.addEventListener("pointermove", onPointerMove);
       canvas.addEventListener("pointerleave", onPointerLeave);
       canvas.addEventListener("pointerdown", onPointerMove);
+      lastPointerDistance = null;
+      approachEnergy = 0;
       seedParticles();
     },
     stop() {
@@ -416,8 +448,8 @@ function createSpinningParticlesProject() {
       const baseRadius = Math.min(viewWidth, viewHeight) * 0.23;
       const fov = baseRadius * 3.2;
       const cameraZ = baseRadius * 3.9;
+      approachEnergy *= Math.exp(-deltaSeconds * 3.6);
       const explodeStrength = getExplodeStrength();
-      const targetFactor = 1 + explodeStrength * 2.2;
       rotation += deltaSeconds * (0.45 + explodeStrength * 0.35);
 
       ctx.clearRect(0, 0, viewWidth, viewHeight);
@@ -429,8 +461,10 @@ function createSpinningParticlesProject() {
 
       for (let i = 0; i < particles.length; i += 1) {
         const particle = particles[i];
-        const eased = 1 - Math.exp(-deltaSeconds * 6);
-        particle.radiusFactor += (targetFactor - particle.radiusFactor) * eased;
+        const targetRadiusFactor = 1 + explodeStrength * (1.7 + particle.inertia * 0.9);
+        const accel = (targetRadiusFactor - particle.radiusFactor) * particle.spring;
+        particle.radiusVelocity = (particle.radiusVelocity + accel * deltaSeconds) * Math.exp(-particle.drag * deltaSeconds);
+        particle.radiusFactor += particle.radiusVelocity * deltaSeconds;
 
         const wobble = Math.sin(time * particle.wobbleSpeed + particle.wobblePhase) * particle.drift;
         const radius = baseRadius * particle.radiusFactor + wobble * 14;
