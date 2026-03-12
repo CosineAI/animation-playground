@@ -1,303 +1,239 @@
-import { TAU, hexToRgb, clamp } from "./utils.js";
+import { clamp } from "./utils.js";
 
 export function createSpiralLiquidProject({ ctx, controlsRoot, getViewWidth, getViewHeight }) {
-  const settings = {
-    primaryColor: "#1a98ff",
-    secondaryColor: "#ff6be6",
-    spinSpeed: 1.2,
-    spinDuration: 4,
-    shape: "spokes",
-    spokes: 6,
-    thickness: 26,
-    softness: 0.6
-  };
+  const baseColor = { r: 20, g: 112, b: 228 };
+  const disturbedColor = { r: 106, g: 221, b: 255 };
 
   const offscreen = document.createElement("canvas");
   const offCtx = offscreen.getContext("2d");
 
-  let cycleTime = 0;
-  let rotation = 0;
+  let simWidth = 0;
+  let simHeight = 0;
+  let cellSize = 6;
 
-  function resizeOffscreen() {
-    offscreen.width = Math.round(getViewWidth());
-    offscreen.height = Math.round(getViewHeight());
+  let previousHeights = new Float32Array(0);
+  let currentHeights = new Float32Array(0);
+  let nextHeights = new Float32Array(0);
+  let frameImage = null;
+
+  let rodAngle = 0;
+  const rodSpinSpeed = 2.6;
+  let rodLengthCells = 0;
+  let rodRadiusCells = 0;
+  let rodLengthPixels = 0;
+  let rodThicknessPixels = 0;
+
+  function resizeSimulation() {
+    const viewWidth = getViewWidth();
+    const viewHeight = getViewHeight();
+    const minDimension = Math.max(1, Math.min(viewWidth, viewHeight));
+
+    cellSize = Math.max(4, Math.round(minDimension / 170));
+    simWidth = Math.max(50, Math.round(viewWidth / cellSize));
+    simHeight = Math.max(50, Math.round(viewHeight / cellSize));
+
+    offscreen.width = simWidth;
+    offscreen.height = simHeight;
+
+    const length = simWidth * simHeight;
+    previousHeights = new Float32Array(length);
+    currentHeights = new Float32Array(length);
+    nextHeights = new Float32Array(length);
+    frameImage = offCtx.createImageData(simWidth, simHeight);
+
+    rodLengthCells = Math.min(simWidth, simHeight) * 0.34;
+    rodRadiusCells = Math.max(1.2, rodLengthCells * 0.03);
+    rodLengthPixels = rodLengthCells * cellSize;
+    rodThicknessPixels = Math.max(10, rodRadiusCells * cellSize * 2.5);
   }
 
-  function formatValue(key, value) {
-    if (key === "spinSpeed" || key === "softness") {
-      return Number(value).toFixed(2);
+  function disturbDisc(centerX, centerY, force, radius) {
+    const minX = Math.max(1, Math.floor(centerX - radius));
+    const maxX = Math.min(simWidth - 2, Math.ceil(centerX + radius));
+    const minY = Math.max(1, Math.floor(centerY - radius));
+    const maxY = Math.min(simHeight - 2, Math.ceil(centerY + radius));
+    const radiusSquared = radius * radius;
+
+    for (let y = minY; y <= maxY; y += 1) {
+      const row = y * simWidth;
+      for (let x = minX; x <= maxX; x += 1) {
+        const dx = x - centerX;
+        const dy = y - centerY;
+        const distanceSquared = dx * dx + dy * dy;
+
+        if (distanceSquared > radiusSquared) {
+          continue;
+        }
+
+        const falloff = 1 - distanceSquared / radiusSquared;
+        const impulse = force * falloff * falloff;
+        const index = row + x;
+
+        currentHeights[index] = clamp(currentHeights[index] + impulse, -4, 4);
+        previousHeights[index] = clamp(previousHeights[index] + impulse * 0.45, -4, 4);
+      }
     }
-    if (key === "spinDuration") {
-      return Number(value).toFixed(1);
-    }
-    return String(Math.round(value));
   }
 
-  function appendRangeControl(panel, panelId, { key, label, min, max, step, integer }) {
-    const controlWrap = document.createElement("div");
-    controlWrap.className = "control-group";
+  function applyRodForcing(deltaSeconds) {
+    const cx = simWidth * 0.5;
+    const cy = simHeight * 0.5;
+    const cosA = Math.cos(rodAngle);
+    const sinA = Math.sin(rodAngle);
+    const normalX = -sinA;
+    const normalY = cosA;
 
-    const labelEl = document.createElement("label");
-    labelEl.htmlFor = `${panelId}-${key}`;
-    labelEl.innerHTML = `<span>${label}</span><span>${formatValue(key, settings[key])}</span>`;
+    const samples = Math.max(12, Math.round(rodLengthCells * 2));
+    const sideOffset = rodRadiusCells * 1.1;
+    const baseForce = clamp(deltaSeconds * rodSpinSpeed * 16, 0.05, 0.75);
 
-    const input = document.createElement("input");
-    input.type = "range";
-    input.id = `${panelId}-${key}`;
-    input.min = String(min);
-    input.max = String(max);
-    input.step = String(step);
-    input.value = String(settings[key]);
-    input.style.accentColor = settings.secondaryColor;
+    for (let i = 0; i < samples; i += 1) {
+      const t = i / (samples - 1) - 0.5;
+      const px = cx + cosA * (t * rodLengthCells);
+      const py = cy + sinA * (t * rodLengthCells);
+      const edgeBoost = 1 + Math.abs(t) * 1.15;
 
-    input.addEventListener("input", () => {
-      const nextValue = integer ? Number.parseInt(input.value, 10) : Number.parseFloat(input.value);
-      settings[key] = nextValue;
-      labelEl.lastElementChild.textContent = formatValue(key, nextValue);
-    });
-
-    controlWrap.appendChild(labelEl);
-    controlWrap.appendChild(input);
-    panel.appendChild(controlWrap);
-  }
-
-  function appendColorControl(panel, panelId, { key, label }) {
-    const controlWrap = document.createElement("div");
-    controlWrap.className = "control-group";
-
-    const labelEl = document.createElement("label");
-    labelEl.htmlFor = `${panelId}-${key}`;
-    labelEl.innerHTML = `<span>${label}</span><span>${settings[key]}</span>`;
-
-    const input = document.createElement("input");
-    input.type = "color";
-    input.id = `${panelId}-${key}`;
-    input.value = settings[key];
-
-    input.addEventListener("input", () => {
-      settings[key] = input.value;
-      labelEl.lastElementChild.textContent = input.value;
-    });
-
-    controlWrap.appendChild(labelEl);
-    controlWrap.appendChild(input);
-    panel.appendChild(controlWrap);
-  }
-
-  function appendSelectControl(panel, panelId, { key, label, options }) {
-    const controlWrap = document.createElement("div");
-    controlWrap.className = "control-group";
-
-    const labelEl = document.createElement("label");
-    labelEl.htmlFor = `${panelId}-${key}`;
-    labelEl.innerHTML = `<span>${label}</span><span>${settings[key]}</span>`;
-
-    const select = document.createElement("select");
-    select.id = `${panelId}-${key}`;
-
-    options.forEach((optionSpec) => {
-      const option = document.createElement("option");
-      option.value = optionSpec.value;
-      option.textContent = optionSpec.label;
-      select.appendChild(option);
-    });
-
-    select.value = settings[key];
-    select.addEventListener("change", () => {
-      settings[key] = select.value;
-      labelEl.lastElementChild.textContent = settings[key];
-      createControls();
-    });
-
-    controlWrap.appendChild(labelEl);
-    controlWrap.appendChild(select);
-    panel.appendChild(controlWrap);
-  }
-
-  function createControls() {
-    controlsRoot.innerHTML = "";
-
-    const panel = document.createElement("section");
-    panel.className = "wave-panel";
-
-    const title = document.createElement("h2");
-    title.className = "wave-title";
-    title.textContent = "Spiral goo";
-    title.style.color = settings.secondaryColor;
-    panel.appendChild(title);
-
-    const tip = document.createElement("p");
-    tip.className = "control-note";
-    tip.textContent = "The spiral unwinds into straight arms, while the ends leave a liquid-like trail.";
-    panel.appendChild(tip);
-
-    appendColorControl(panel, "spiral", { key: "primaryColor", label: "Primary (base)" });
-    appendColorControl(panel, "spiral", { key: "secondaryColor", label: "Secondary (disturbed)" });
-
-    appendRangeControl(panel, "spiral", { key: "spinSpeed", label: "Spin speed", min: -6, max: 6, step: 0.01, integer: false });
-    appendRangeControl(panel, "spiral", { key: "spinDuration", label: "Unwind duration", min: 0.6, max: 12, step: 0.1, integer: false });
-
-    appendSelectControl(panel, "spiral", {
-      key: "shape",
-      label: "Shape",
-      options: [
-        { value: "spokes", label: "Spokes" },
-        { value: "triangle", label: "Triangle" },
-        { value: "square", label: "Square" }
-      ]
-    });
-
-    if (settings.shape === "spokes") {
-      appendRangeControl(panel, "spiral", { key: "spokes", label: "Spokes", min: 2, max: 16, step: 1, integer: true });
+      disturbDisc(px + normalX * sideOffset, py + normalY * sideOffset, baseForce * edgeBoost, rodRadiusCells * 1.7);
+      disturbDisc(px - normalX * sideOffset, py - normalY * sideOffset, -baseForce * edgeBoost, rodRadiusCells * 1.7);
     }
 
-    appendRangeControl(panel, "spiral", { key: "thickness", label: "Stickiness", min: 6, max: 90, step: 1, integer: true });
-    appendRangeControl(panel, "spiral", { key: "softness", label: "Liquid fade", min: 0.05, max: 0.98, step: 0.01, integer: false });
-
-    controlsRoot.appendChild(panel);
+    const halfLength = rodLengthCells * 0.5;
+    disturbDisc(cx + cosA * halfLength, cy + sinA * halfLength, baseForce * 2.2, rodRadiusCells * 2.4);
+    disturbDisc(cx - cosA * halfLength, cy - sinA * halfLength, -baseForce * 2.2, rodRadiusCells * 2.4);
   }
 
-  function getShapeAngles() {
-    if (settings.shape === "triangle") {
-      return [0, TAU / 3, (2 * TAU) / 3];
-    }
+  function simulateStep(deltaSeconds) {
+    rodAngle += rodSpinSpeed * deltaSeconds;
+    applyRodForcing(deltaSeconds);
 
-    if (settings.shape === "square") {
-      return [0, TAU / 4, TAU / 2, (3 * TAU) / 4];
-    }
+    const tension = 0.2;
+    const damping = Math.pow(0.9925, clamp(deltaSeconds * 60, 0.5, 2.5));
 
-    const count = clamp(Math.round(settings.spokes), 2, 24);
-    const angles = [];
-    for (let i = 0; i < count; i += 1) {
-      angles.push((i / count) * TAU);
-    }
-    return angles;
-  }
+    for (let y = 1; y < simHeight - 1; y += 1) {
+      const row = y * simWidth;
+      for (let x = 1; x < simWidth - 1; x += 1) {
+        const index = row + x;
+        const laplacian =
+          currentHeights[index - 1] +
+          currentHeights[index + 1] +
+          currentHeights[index - simWidth] +
+          currentHeights[index + simWidth] -
+          currentHeights[index] * 4;
 
-  function drawArm(cx, cy, radius, baseAngle, spiralTurns, unwindT) {
-    const samples = 120;
-    const thickness = settings.thickness;
-
-    const primary = hexToRgb(settings.primaryColor);
-    const secondary = hexToRgb(settings.secondaryColor);
-
-    const gradient = offCtx.createLinearGradient(cx, cy, cx + Math.cos(baseAngle) * radius, cy + Math.sin(baseAngle) * radius);
-    gradient.addColorStop(0, `rgba(${primary.r}, ${primary.g}, ${primary.b}, 0.08)`);
-    gradient.addColorStop(0.35, `rgba(${primary.r}, ${primary.g}, ${primary.b}, 0.0)`);
-    gradient.addColorStop(0.7, `rgba(${secondary.r}, ${secondary.g}, ${secondary.b}, 0.6)`);
-    gradient.addColorStop(1, `rgba(${secondary.r}, ${secondary.g}, ${secondary.b}, 0.9)`);
-
-    offCtx.beginPath();
-
-    for (let i = 0; i <= samples; i += 1) {
-      const t = i / samples;
-      const r = radius * t;
-      const extra = (1 - unwindT) * spiralTurns * TAU * t;
-      const angle = baseAngle + extra;
-      const x = cx + Math.cos(angle) * r;
-      const y = cy + Math.sin(angle) * r;
-
-      if (i === 0) {
-        offCtx.moveTo(x, y);
-      } else {
-        offCtx.lineTo(x, y);
+        nextHeights[index] = (currentHeights[index] * 2 - previousHeights[index] + laplacian * tension) * damping;
       }
     }
 
-    offCtx.lineCap = "round";
-    offCtx.lineJoin = "round";
-    offCtx.strokeStyle = gradient;
-    offCtx.lineWidth = thickness;
-    offCtx.globalAlpha = 1;
-    offCtx.stroke();
-
-    offCtx.strokeStyle = `rgba(${secondary.r}, ${secondary.g}, ${secondary.b}, 0.95)`;
-    offCtx.lineWidth = Math.max(1.5, thickness * 0.18);
-    offCtx.globalAlpha = 0.9;
-    offCtx.stroke();
+    const temp = previousHeights;
+    previousHeights = currentHeights;
+    currentHeights = nextHeights;
+    nextHeights = temp;
   }
 
-  function paintBase(deltaSeconds) {
-    const viewWidth = getViewWidth();
-    const viewHeight = getViewHeight();
-    const rgb = hexToRgb(settings.primaryColor);
+  function simulate(deltaSeconds) {
+    let remaining = Math.max(0, deltaSeconds);
+    const maxStep = 1 / 90;
+    let steps = 0;
 
-    offCtx.globalCompositeOperation = "source-over";
-    offCtx.fillStyle = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${clamp(1 - settings.softness, 0.02, 1)})`;
-    offCtx.fillRect(0, 0, viewWidth, viewHeight);
-
-    const fade = clamp(settings.softness, 0.05, 0.98);
-    offCtx.fillStyle = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${clamp((1 - fade) * deltaSeconds * 1.8, 0.01, 0.18)})`;
-    offCtx.fillRect(0, 0, viewWidth, viewHeight);
+    while (remaining > 0 && steps < 5) {
+      const step = Math.min(maxStep, remaining);
+      simulateStep(step);
+      remaining -= step;
+      steps += 1;
+    }
   }
 
-  function drawToMain() {
+  function drawLiquid() {
+    const data = frameImage.data;
+    let pointer = 0;
+
+    for (let y = 0; y < simHeight; y += 1) {
+      const row = y * simWidth;
+
+      for (let x = 0; x < simWidth; x += 1) {
+        const index = row + x;
+        const height = currentHeights[index];
+
+        const left = x > 0 ? currentHeights[index - 1] : height;
+        const right = x < simWidth - 1 ? currentHeights[index + 1] : height;
+        const up = y > 0 ? currentHeights[index - simWidth] : height;
+        const down = y < simHeight - 1 ? currentHeights[index + simWidth] : height;
+
+        const gx = right - left;
+        const gy = down - up;
+        const gradient = Math.hypot(gx, gy);
+        const disturbedAmount = clamp(Math.abs(height) * 0.38 + gradient * 0.65, 0, 1);
+        const light = clamp(0.84 + gx * 0.16 + gy * 0.12, 0.55, 1.25);
+
+        const mixedR = baseColor.r + (disturbedColor.r - baseColor.r) * disturbedAmount;
+        const mixedG = baseColor.g + (disturbedColor.g - baseColor.g) * disturbedAmount;
+        const mixedB = baseColor.b + (disturbedColor.b - baseColor.b) * disturbedAmount;
+
+        data[pointer] = clamp(mixedR * light, 0, 255);
+        data[pointer + 1] = clamp(mixedG * light, 0, 255);
+        data[pointer + 2] = clamp(mixedB * light, 0, 255);
+        data[pointer + 3] = 255;
+        pointer += 4;
+      }
+    }
+
+    offCtx.putImageData(frameImage, 0, 0);
+
     const viewWidth = getViewWidth();
     const viewHeight = getViewHeight();
 
     ctx.clearRect(0, 0, viewWidth, viewHeight);
-    ctx.drawImage(offscreen, 0, 0);
+    ctx.imageSmoothingEnabled = true;
+    ctx.drawImage(offscreen, 0, 0, viewWidth, viewHeight);
   }
 
-  resizeOffscreen();
+  function drawRod() {
+    const cx = getViewWidth() * 0.5;
+    const cy = getViewHeight() * 0.5;
+    const halfLength = rodLengthPixels * 0.5;
+
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(rodAngle);
+    ctx.lineCap = "round";
+
+    ctx.strokeStyle = "rgba(232, 247, 255, 0.88)";
+    ctx.lineWidth = rodThicknessPixels;
+    ctx.beginPath();
+    ctx.moveTo(-halfLength, 0);
+    ctx.lineTo(halfLength, 0);
+    ctx.stroke();
+
+    ctx.strokeStyle = "rgba(147, 197, 255, 0.95)";
+    ctx.lineWidth = rodThicknessPixels * 0.42;
+    ctx.beginPath();
+    ctx.moveTo(-halfLength * 0.96, 0);
+    ctx.lineTo(halfLength * 0.96, 0);
+    ctx.stroke();
+
+    ctx.restore();
+  }
+
+  resizeSimulation();
 
   return {
     id: "spiral-goo",
-    name: "Spiral goo",
-    hasControls: true,
+    name: "Liquid rod",
+    hasControls: false,
     start() {
-      resizeOffscreen();
-      createControls();
-      offCtx.clearRect(0, 0, offscreen.width, offscreen.height);
+      controlsRoot.innerHTML = "";
+      resizeSimulation();
     },
     stop() {
       controlsRoot.innerHTML = "";
     },
     resize() {
-      resizeOffscreen();
-      offCtx.clearRect(0, 0, offscreen.width, offscreen.height);
+      resizeSimulation();
     },
     render(_timestamp, deltaSeconds) {
-      const viewWidth = getViewWidth();
-      const viewHeight = getViewHeight();
-      const cx = viewWidth * 0.5;
-      const cy = viewHeight * 0.5;
-
-      const speed = settings.spinSpeed;
-      rotation += deltaSeconds * speed;
-
-      const duration = Math.max(0.25, settings.spinDuration);
-      cycleTime = (cycleTime + deltaSeconds) % duration;
-
-      const phase = cycleTime / duration;
-      const unwindT = 1 - Math.pow(phase, 1.4);
-
-      const radius = Math.min(viewWidth, viewHeight) * 0.42;
-      const spiralTurns = 1.4;
-
-      paintBase(deltaSeconds);
-
-      offCtx.save();
-      offCtx.translate(cx, cy);
-      offCtx.rotate(rotation);
-      offCtx.translate(-cx, -cy);
-
-      const angles = getShapeAngles();
-
-      offCtx.globalCompositeOperation = "lighter";
-      offCtx.shadowColor = settings.secondaryColor;
-      offCtx.shadowBlur = 22 + settings.thickness * 0.22;
-
-      for (let i = 0; i < angles.length; i += 1) {
-        drawArm(cx, cy, radius, angles[i], spiralTurns, unwindT);
-      }
-
-      offCtx.restore();
-      offCtx.shadowBlur = 0;
-      offCtx.shadowColor = "transparent";
-      offCtx.globalCompositeOperation = "source-over";
-
-      drawToMain();
+      simulate(deltaSeconds);
+      drawLiquid();
+      drawRod();
     }
   };
 }
