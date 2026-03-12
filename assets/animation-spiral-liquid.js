@@ -8,6 +8,7 @@ export function createSpiralLiquidProject({ ctx, controlsRoot, getViewWidth, get
     disturbance: 0.9,
     spread: 0.12,
     damping: 0.978,
+    viscosity: 0.22,
     rodLength: 0.34,
     rodThickness: 0.03,
     rippleGain: 0.95
@@ -69,7 +70,7 @@ export function createSpiralLiquidProject({ ctx, controlsRoot, getViewWidth, get
   }
 
   function formatRangeValue(key, value) {
-    if (key === "spinSpeed" || key === "disturbance" || key === "spread" || key === "damping" || key === "rippleGain") {
+    if (key === "spinSpeed" || key === "disturbance" || key === "spread" || key === "damping" || key === "viscosity" || key === "rippleGain") {
       return Number(value).toFixed(3);
     }
     if (key === "rodLength" || key === "rodThickness") {
@@ -147,7 +148,7 @@ export function createSpiralLiquidProject({ ctx, controlsRoot, getViewWidth, get
 
     const tip = document.createElement("p");
     tip.className = "control-note";
-    tip.textContent = "Defaults are heavily damped to keep disturbances localized. Lower damping / raise spread if you want the ripples to travel farther.";
+    tip.textContent = "Defaults are heavily damped to keep disturbances localized. Use viscosity to make the liquid thicker and smoother.";
     panel.appendChild(tip);
 
     appendColorControl(panel, "liquid-rod", { key: "baseColor", label: "Base liquid color" });
@@ -157,6 +158,7 @@ export function createSpiralLiquidProject({ ctx, controlsRoot, getViewWidth, get
     appendRangeControl(panel, "liquid-rod", { key: "disturbance", label: "Disturbance force", min: 0, max: 2.8, step: 0.01 });
     appendRangeControl(panel, "liquid-rod", { key: "spread", label: "Ripple spread", min: 0.04, max: 0.34, step: 0.001 });
     appendRangeControl(panel, "liquid-rod", { key: "damping", label: "Damping", min: 0.94, max: 0.999, step: 0.001 });
+    appendRangeControl(panel, "liquid-rod", { key: "viscosity", label: "Viscosity", min: 0, max: 0.8, step: 0.001 });
     appendRangeControl(panel, "liquid-rod", { key: "rodLength", label: "Rod length", min: 0.12, max: 0.75, step: 0.01 });
     appendRangeControl(panel, "liquid-rod", { key: "rodThickness", label: "Rod thickness", min: 0.01, max: 0.08, step: 0.001 });
     appendRangeControl(panel, "liquid-rod", { key: "rippleGain", label: "Ripple color gain", min: 0.2, max: 2, step: 0.01 });
@@ -226,19 +228,23 @@ export function createSpiralLiquidProject({ ctx, controlsRoot, getViewWidth, get
 
     const tension = clamp(settings.spread, 0.02, 0.5);
     const dampingStep = Math.pow(clamp(settings.damping, 0.9, 0.9999), clamp(deltaSeconds * 60, 0.4, 3));
+    const viscosityStep = 1 - Math.pow(1 - clamp(settings.viscosity, 0, 0.95), clamp(deltaSeconds * 60, 0.4, 3));
 
     for (let y = 1; y < simHeight - 1; y += 1) {
       const row = y * simWidth;
       for (let x = 1; x < simWidth - 1; x += 1) {
         const index = row + x;
-        const laplacian =
-          currentHeights[index - 1] +
-          currentHeights[index + 1] +
-          currentHeights[index - simWidth] +
-          currentHeights[index + simWidth] -
-          currentHeights[index] * 4;
+        const left = currentHeights[index - 1];
+        const right = currentHeights[index + 1];
+        const up = currentHeights[index - simWidth];
+        const down = currentHeights[index + simWidth];
+        const center = currentHeights[index];
 
-        nextHeights[index] = (currentHeights[index] * 2 - previousHeights[index] + laplacian * tension) * dampingStep;
+        const laplacian = left + right + up + down - center * 4;
+        const waveValue = (center * 2 - previousHeights[index] + laplacian * tension) * dampingStep;
+        const neighborhoodAverage = (left + right + up + down) * 0.25;
+
+        nextHeights[index] = waveValue + (neighborhoodAverage - waveValue) * viscosityStep;
       }
     }
 
