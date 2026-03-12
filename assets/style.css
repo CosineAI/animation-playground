@@ -143,3 +143,13 @@ body.controls-hidden #controls {
   width: 100%;
   margin: 0;
 }
+
+.control-group input[type="color"] {
+  width: 100%;
+  height: 1.9rem;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
