@@ -139,7 +139,24 @@ body.controls-hidden #controls {
   margin-bottom: 0.2rem;
 }
 
+.control-note {
+  margin: 0 0 0.6rem;
+  font-size: 0.72rem;
+  color: #30374f;
+  line-height: 1.35;
+}
+
 .control-group input[type="range"] {
   width: 100%;
   margin: 0;
+}
+
+.control-group input[type="color"] {
+  width: 100%;
+  height: 1.9rem;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
 }
