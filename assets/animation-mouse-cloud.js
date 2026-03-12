@@ -164,6 +164,11 @@ export function createMouseCloudProject({ canvas, ctx, controlsRoot, getViewWidt
     title.style.color = settings.colors[0];
     panel.appendChild(title);
 
+    const tip = document.createElement("p");
+    tip.className = "control-note";
+    tip.textContent = "Press spacebar to push away particles from your mouse";
+    panel.appendChild(tip);
+
     appendRangeControl(panel, "mouse-cloud", { key: "particleCount", label: "Number of particles", min: 80, max: 1800, step: 1, integer: true });
     appendRangeControl(panel, "mouse-cloud", { key: "baseSpeed", label: "Base speed", min: 10, max: 260, step: 1, integer: true });
     appendRangeControl(panel, "mouse-cloud", { key: "sizeVariety", label: "Variety of sizes", min: 0, max: 1, step: 0.01, integer: false });
