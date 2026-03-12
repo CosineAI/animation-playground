@@ -160,3 +160,14 @@ body.controls-hidden #controls {
   background: transparent;
   cursor: pointer;
 }
+
+.control-group select {
+  width: 100%;
+  height: 1.9rem;
+  border-radius: 10px;
+  border: 1px solid rgba(70, 78, 110, 0.28);
+  background: rgba(255, 255, 255, 0.9);
+  font-size: 0.78rem;
+  padding: 0 0.55rem;
+  color: #2b3350;
+}
