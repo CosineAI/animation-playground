@@ -28,12 +28,8 @@ export function createSpiral3dProject({ canvas, ctx, getViewWidth, getViewHeight
   const settings = {
     periods: 8,
     thetaPerPeriod: TAU,
-    baseRadius: 120,
-    radiusAmplitude: 55,
-    radiusFrequency: 1,
-    pitchPerTurn: 38,
-    zWobbleAmplitude: 24,
-    zWobbleFrequency: 0.5
+    xPerTurn: 95,
+    radius: 150
   };
 
   const path = [];
@@ -53,10 +49,9 @@ export function createSpiral3dProject({ canvas, ctx, getViewWidth, getViewHeight
   let prevY = 0;
 
   function sampleSpiral(theta) {
-    const r = settings.baseRadius + settings.radiusAmplitude * Math.sin(theta * settings.radiusFrequency);
-    const x = Math.cos(theta) * r;
-    const y = Math.sin(theta) * r;
-    const z = (theta / TAU) * settings.pitchPerTurn + settings.zWobbleAmplitude * Math.sin(theta * settings.zWobbleFrequency);
+    const x = (theta / TAU) * settings.xPerTurn;
+    const y = settings.radius * Math.sin(theta);
+    const z = settings.radius * Math.cos(theta);
     return { x, y, z };
   }
 
@@ -82,9 +77,12 @@ export function createSpiral3dProject({ canvas, ctx, getViewWidth, getViewHeight
       const palette = particlePalette[i % particlePalette.length];
       particles.push({
         theta: Math.random() * maxTheta,
-        speed: lerp(0.7, 2.6, Math.random()),
+        speed: lerp(0.08, 0.35, Math.pow(Math.random(), 1.35)),
         size: lerp(1.1, 4.2, Math.pow(Math.random(), 1.8)),
         alpha: lerp(0.55, 0.92, Math.random()),
+        floatPhase: Math.random() * TAU,
+        floatSpeed: lerp(0.25, 0.9, Math.random()),
+        floatAmplitude: lerp(3, 14, Math.pow(Math.random(), 1.6)),
         rgb: palette,
         depth: 0,
         sx: 0,
@@ -249,6 +247,7 @@ export function createSpiral3dProject({ canvas, ctx, getViewWidth, getViewHeight
       dragMode = "orbit";
     },
     render(timestamp, deltaSeconds) {
+      const time = timestamp * 0.001;
       const viewWidth = getViewWidth();
       const viewHeight = getViewHeight();
       const centerX = viewWidth * 0.5;
@@ -299,11 +298,17 @@ export function createSpiral3dProject({ canvas, ctx, getViewWidth, getViewHeight
 
       for (let i = 0; i < particles.length; i += 1) {
         const particle = particles[i];
-        particle.theta += particle.speed * deltaSeconds * TAU * 0.55;
+        particle.theta += particle.speed * deltaSeconds * TAU;
         particle.theta %= maxTheta;
 
+        const floatOffset = Math.sin(time * particle.floatSpeed + particle.floatPhase) * particle.floatAmplitude;
         const worldPoint = sampleSpiral(particle.theta);
-        const camPoint = worldToCamera(worldPoint, basis);
+        const worldFloat = {
+          x: worldPoint.x + Math.cos(time * 0.25 + particle.floatPhase) * 2.2,
+          y: worldPoint.y * (1 + floatOffset / Math.max(1, settings.radius) * 0.55),
+          z: worldPoint.z * (1 + floatOffset / Math.max(1, settings.radius) * 0.55)
+        };
+        const camPoint = worldToCamera(worldFloat, basis);
 
         if (camPoint.z < -fov * 0.9) {
           particle.depth = camPoint.z;
