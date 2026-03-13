@@ -33,7 +33,7 @@ export function createSpiral3dProject({ canvas, ctx, getViewWidth, getViewHeight
   const settings = {
     periods: 8,
     thetaPerPeriod: TAU,
-    xPerTurn: 285,
+    xPerTurn: 855,
     radius: 150
   };
 
