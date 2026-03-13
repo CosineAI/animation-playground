@@ -382,9 +382,16 @@ export function createSpiral3dProject({ canvas, ctx, getViewWidth, getViewHeight
         const ay = (targetY - particle.y) * particle.spring;
         const az = (targetZ - particle.z) * particle.spring;
 
-        particle.vx += ax * deltaSeconds;
-        particle.vy += ay * deltaSeconds;
-        particle.vz += az * deltaSeconds;
+        const gx = desired.x - particle.x;
+        const gy = desired.y - particle.y;
+        const gz = desired.z - particle.z;
+        const gDistSq = gx * gx + gy * gy + gz * gz + 1600;
+        const gStrength = 1200;
+        const gFactor = gStrength / gDistSq;
+
+        particle.vx += (ax + gx * gFactor) * deltaSeconds;
+        particle.vy += (ay + gy * gFactor) * deltaSeconds;
+        particle.vz += (az + gz * gFactor) * deltaSeconds;
 
         const damping = Math.pow(particle.damping, deltaSeconds * 60);
         particle.vx *= damping;
