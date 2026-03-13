@@ -21,6 +21,11 @@ function lerp(a, b, t) {
   return a + (b - a) * t;
 }
 
+function smoothstep(edge0, edge1, x) {
+  const t = clamp((x - edge0) / (edge1 - edge0), 0, 1);
+  return t * t * (3 - 2 * t);
+}
+
 export function createSpiral3dProject({ canvas, ctx, getViewWidth, getViewHeight }) {
   const strokeRgb = hexToRgb("#1a98ff");
   const particlePalette = ["#1a98ff", "#7a5cff", "#ff6be6", "#ffd38a"].map(hexToRgb);
@@ -59,7 +64,7 @@ export function createSpiral3dProject({ canvas, ctx, getViewWidth, getViewHeight
     path.length = 0;
 
     const maxTheta = settings.periods * settings.thetaPerPeriod;
-    const samples = Math.round(1400);
+    const samples = Math.round(1100);
 
     for (let i = 0; i <= samples; i += 1) {
       const t = i / samples;
@@ -70,20 +75,42 @@ export function createSpiral3dProject({ canvas, ctx, getViewWidth, getViewHeight
 
   function rebuildParticles() {
     particles.length = 0;
-    const count = 140;
+    const count = 420;
     const maxTheta = settings.periods * settings.thetaPerPeriod;
 
     for (let i = 0; i < count; i += 1) {
       const palette = particlePalette[i % particlePalette.length];
+      const theta = Math.random() * maxTheta;
+      const base = sampleSpiral(theta);
+      const phase = Math.random() * TAU;
+      const wanderRadius = lerp(18, 70, Math.pow(Math.random(), 1.4));
+
+      const radialLen = Math.hypot(base.y, base.z) || 1;
+      const radialY = base.y / radialLen;
+      const radialZ = base.z / radialLen;
+      const tangentY = -radialZ;
+      const tangentZ = radialY;
+
+      const offsetY = (Math.sin(phase) * radialY + Math.cos(phase) * tangentY) * wanderRadius;
+      const offsetZ = (Math.sin(phase) * radialZ + Math.cos(phase) * tangentZ) * wanderRadius;
+
       particles.push({
-        theta: Math.random() * maxTheta,
-        speed: lerp(0.08, 0.35, Math.pow(Math.random(), 1.35)),
-        size: lerp(1.1, 4.2, Math.pow(Math.random(), 1.8)),
-        alpha: lerp(0.55, 0.92, Math.random()),
-        floatPhase: Math.random() * TAU,
-        floatSpeed: lerp(0.25, 0.9, Math.random()),
-        floatAmplitude: lerp(3, 14, Math.pow(Math.random(), 1.6)),
+        theta,
+        thetaSpeed: lerp(0.05, 0.22, Math.pow(Math.random(), 1.3)),
+        size: lerp(1.1, 4.3, Math.pow(Math.random(), 1.8)),
+        alpha: lerp(0.35, 0.85, Math.random()),
         rgb: palette,
+        wanderPhase: phase,
+        wanderSpeed: lerp(0.12, 0.55, Math.random()),
+        wanderRadius,
+        spring: lerp(1.6, 4.2, Math.random()),
+        damping: lerp(0.8, 0.92, Math.random()),
+        x: base.x,
+        y: base.y + offsetY,
+        z: base.z + offsetZ,
+        vx: 0,
+        vy: 0,
+        vz: 0,
         depth: 0,
         sx: 0,
         sy: 0,
@@ -282,33 +309,93 @@ export function createSpiral3dProject({ canvas, ctx, getViewWidth, getViewHeight
         }
       }
 
-      ctx.globalAlpha = 0.25;
+      ctx.globalAlpha = 0.1;
       ctx.strokeStyle = `rgb(${strokeRgb.r}, ${strokeRgb.g}, ${strokeRgb.b})`;
-      ctx.shadowColor = "rgba(26, 152, 255, 0.35)";
+      ctx.shadowColor = "rgba(26, 152, 255, 0.22)";
       ctx.shadowBlur = 18;
-      ctx.lineWidth = 5;
+      ctx.lineWidth = 6;
       ctx.stroke();
 
-      ctx.globalAlpha = 0.9;
       ctx.shadowBlur = 0;
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
+      ctx.lineWidth = 1.6;
+
+      const fadeSpan = 0.16;
+
+      for (let i = 1; i < path.length; i += 1) {
+        const t0 = (i - 1) / (path.length - 1);
+        const t1 = i / (path.length - 1);
+        const tm = (t0 + t1) * 0.5;
+        const fadeIn = smoothstep(0, fadeSpan, tm);
+        const fadeOut = smoothstep(0, fadeSpan, 1 - tm);
+        const alpha = 0.92 * fadeIn * fadeOut;
+
+        if (alpha <= 0.001) {
+          continue;
+        }
+
+        const p0 = worldToCamera(path[i - 1].point, basis);
+        const p1 = worldToCamera(path[i].point, basis);
+        if (p0.z < -fov * 0.9 || p1.z < -fov * 0.9) {
+          continue;
+        }
+
+        const s0 = project(p0, centerX, centerY, fov);
+        const s1 = project(p1, centerX, centerY, fov);
+
+        ctx.beginPath();
+        ctx.globalAlpha = alpha;
+        ctx.strokeStyle = `rgb(${strokeRgb.r}, ${strokeRgb.g}, ${strokeRgb.b})`;
+        ctx.moveTo(s0.x, s0.y);
+        ctx.lineTo(s1.x, s1.y);
+        ctx.stroke();
+      }
+
+      ctx.globalAlpha = 1;
 
       const maxTheta = settings.periods * settings.thetaPerPeriod;
 
       for (let i = 0; i < particles.length; i += 1) {
         const particle = particles[i];
-        particle.theta += particle.speed * deltaSeconds * TAU;
+        particle.theta += particle.thetaSpeed * deltaSeconds * TAU;
         particle.theta %= maxTheta;
 
-        const floatOffset = Math.sin(time * particle.floatSpeed + particle.floatPhase) * particle.floatAmplitude;
-        const worldPoint = sampleSpiral(particle.theta);
-        const worldFloat = {
-          x: worldPoint.x + Math.cos(time * 0.25 + particle.floatPhase) * 2.2,
-          y: worldPoint.y * (1 + floatOffset / Math.max(1, settings.radius) * 0.55),
-          z: worldPoint.z * (1 + floatOffset / Math.max(1, settings.radius) * 0.55)
-        };
-        const camPoint = worldToCamera(worldFloat, basis);
+        particle.wanderPhase += particle.wanderSpeed * deltaSeconds;
+
+        const desired = sampleSpiral(particle.theta);
+        const radialLen = Math.hypot(desired.y, desired.z) || 1;
+        const radialY = desired.y / radialLen;
+        const radialZ = desired.z / radialLen;
+        const tangentY = -radialZ;
+        const tangentZ = radialY;
+
+        const wander = Math.sin(particle.wanderPhase) * particle.wanderRadius;
+        const drift = Math.cos(particle.wanderPhase * 0.7 + particle.theta) * particle.wanderRadius * 0.55;
+
+        const offsetY = radialY * wander + tangentY * drift;
+        const offsetZ = radialZ * wander + tangentZ * drift;
+
+        const targetX = desired.x + Math.sin(time * 0.08 + particle.wanderPhase) * 8;
+        const targetY = desired.y + offsetY;
+        const targetZ = desired.z + offsetZ;
+
+        const ax = (targetX - particle.x) * particle.spring;
+        const ay = (targetY - particle.y) * particle.spring;
+        const az = (targetZ - particle.z) * particle.spring;
+
+        particle.vx += ax * deltaSeconds;
+        particle.vy += ay * deltaSeconds;
+        particle.vz += az * deltaSeconds;
+
+        const damping = Math.pow(particle.damping, deltaSeconds * 60);
+        particle.vx *= damping;
+        particle.vy *= damping;
+        particle.vz *= damping;
+
+        particle.x += particle.vx * deltaSeconds;
+        particle.y += particle.vy * deltaSeconds;
+        particle.z += particle.vz * deltaSeconds;
+
+        const camPoint = worldToCamera({ x: particle.x, y: particle.y, z: particle.z }, basis);
 
         if (camPoint.z < -fov * 0.9) {
           particle.depth = camPoint.z;
