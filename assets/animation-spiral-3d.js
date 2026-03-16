@@ -37,13 +37,15 @@ export function createSpiral3dProject({ canvas, ctx, getViewWidth, getViewHeight
     radius: 150
   };
 
+  const spiralLength = settings.periods * settings.xPerTurn;
+
   const path = [];
   const particles = [];
 
   let yaw = 0.6;
   let pitch = 0.25;
   let distance = 780;
-  let targetX = 0;
+  let targetX = spiralLength * 0.5;
   let targetY = 0;
   let targetZ = 0;
 
@@ -243,7 +245,7 @@ export function createSpiral3dProject({ canvas, ctx, getViewWidth, getViewHeight
       distance /= zoomStrength;
     }
 
-    distance = clamp(distance, 180, 2400);
+    distance = clamp(distance, 60, 2400);
   }
 
   rebuildPath();
