@@ -2,6 +2,8 @@
 
 A minimal, no-build static site template — just open `index.html` and start editing.
 
+It has zero build steps, which is great because the build pipeline can't fail if it doesn't exist.
+
 A static site can be deployed via the Preview on the toolbar. If you'd like to customise your own url for static sites, you can change your deployment settings under project settings. 
 
 Let's get started!
