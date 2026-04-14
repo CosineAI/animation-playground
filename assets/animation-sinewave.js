@@ -3,8 +3,8 @@ import { TAU, hexToRgb } from "./utils.js";
 export function createSinewaveProject({ ctx, controlsRoot, getViewWidth, getViewHeight }) {
   const waves = [
     {
-      name: "Wave 1",
-      color: "#ee68f5",
+      name: "Crimson tide",
+      color: "#d35b3f",
       amplitude: 72,
       wavelength: 380,
       speed: 0.22,
@@ -15,8 +15,8 @@ export function createSinewaveProject({ ctx, controlsRoot, getViewWidth, getView
       particles: []
     },
     {
-      name: "Wave 2",
-      color: "#ccc2ff",
+      name: "Moonlit reef",
+      color: "#d2bf8a",
       amplitude: 58,
       wavelength: 300,
       speed: 0.16,
@@ -27,8 +27,8 @@ export function createSinewaveProject({ ctx, controlsRoot, getViewWidth, getView
       particles: []
     },
     {
-      name: "Wave 3",
-      color: "#c0deff",
+      name: "Corsair current",
+      color: "#78a7a6",
       amplitude: 45,
       wavelength: 450,
       speed: 0.1,
@@ -39,8 +39,8 @@ export function createSinewaveProject({ ctx, controlsRoot, getViewWidth, getView
       particles: []
     },
     {
-      name: "Wave 4",
-      color: "#fff0d0",
+      name: "Sunken gold",
+      color: "#f1c979",
       amplitude: 35,
       wavelength: 260,
       speed: 0.06,
@@ -53,13 +53,13 @@ export function createSinewaveProject({ ctx, controlsRoot, getViewWidth, getView
   ];
 
   const controlSpecs = [
-    { key: "amplitude", label: "Amplitude", min: 10, max: 220, step: 1, integer: true },
-    { key: "wavelength", label: "Wavelength", min: 80, max: 900, step: 1, integer: true },
-    { key: "speed", label: "Movement Speed", min: 0.02, max: 1.2, step: 0.01, integer: false },
-    { key: "glow", label: "Glow", min: 0, max: 60, step: 1, integer: true },
-    { key: "particleCount", label: "Particles", min: 0, max: 300, step: 1, integer: true },
-    { key: "yOffset", label: "Y Translation", min: -350, max: 350, step: 1, integer: true },
-    { key: "xOffset", label: "X Translation", min: -700, max: 700, step: 1, integer: true }
+    { key: "amplitude", label: "Swell height", min: 10, max: 220, step: 1, integer: true },
+    { key: "wavelength", label: "Tide length", min: 80, max: 900, step: 1, integer: true },
+    { key: "speed", label: "Current speed", min: 0.02, max: 1.2, step: 0.01, integer: false },
+    { key: "glow", label: "Lantern glow", min: 0, max: 60, step: 1, integer: true },
+    { key: "particleCount", label: "Sea spray", min: 0, max: 300, step: 1, integer: true },
+    { key: "yOffset", label: "Deck rise", min: -350, max: 350, step: 1, integer: true },
+    { key: "xOffset", label: "Starboard drift", min: -700, max: 700, step: 1, integer: true }
   ];
 
   function formatValue(key, value) {
@@ -230,7 +230,7 @@ export function createSinewaveProject({ ctx, controlsRoot, getViewWidth, getView
 
   return {
     id: "sinewave",
-    name: "Sinewave",
+    name: "Black Pearl tides",
     hasControls: true,
     start() {
       createControls();
@@ -244,7 +244,7 @@ export function createSinewaveProject({ ctx, controlsRoot, getViewWidth, getView
       const viewHeight = getViewHeight();
 
       ctx.clearRect(0, 0, viewWidth, viewHeight);
-      ctx.fillStyle = "#ffffff";
+      ctx.fillStyle = "#0d1b2a";
       ctx.fillRect(0, 0, viewWidth, viewHeight);
 
       for (let i = 0; i < waves.length; i += 1) {

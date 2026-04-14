@@ -3,10 +3,10 @@ import { TAU, hexToRgb, clamp } from "./utils.js";
 export function createSpinningParticlesProject({ canvas, ctx, getViewWidth, getViewHeight }) {
   const particles = [];
   const palette = [
-    { rgb: hexToRgb("#1a98ff"), alpha: 0.75 },
-    { rgb: hexToRgb("#7a5cff"), alpha: 0.66 },
-    { rgb: hexToRgb("#ff6be6"), alpha: 0.62 },
-    { rgb: hexToRgb("#ffd38a"), alpha: 0.58 }
+    { rgb: hexToRgb("#d8b36b"), alpha: 0.75 },
+    { rgb: hexToRgb("#7f5b3a"), alpha: 0.66 },
+    { rgb: hexToRgb("#3b6176"), alpha: 0.62 },
+    { rgb: hexToRgb("#f2e0b3"), alpha: 0.58 }
   ];
 
   let rotation = 0;
@@ -144,7 +144,7 @@ export function createSpinningParticlesProject({ canvas, ctx, getViewWidth, getV
 
   return {
     id: "spinning-particles",
-    name: "Spinning particles",
+    name: "Cursed doubloons",
     hasControls: false,
     start() {
       canvas.addEventListener("pointermove", onPointerMove);
@@ -189,7 +189,7 @@ export function createSpinningParticlesProject({ canvas, ctx, getViewWidth, getV
       rotation += deltaSeconds * (rotationVelocity + explodeStrength * 0.2);
 
       ctx.clearRect(0, 0, viewWidth, viewHeight);
-      ctx.fillStyle = "#ffffff";
+      ctx.fillStyle = "#0b1420";
       ctx.fillRect(0, 0, viewWidth, viewHeight);
 
       const sinR = Math.sin(rotation);

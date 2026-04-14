@@ -33,7 +33,7 @@ function setControlsAvailability(available) {
 function setControlsVisibility(visible) {
   controlsVisible = visible;
   document.body.classList.toggle("controls-hidden", !visible);
-  controlsToggleButton.textContent = visible ? "Hide Controls" : "Show Controls";
+  controlsToggleButton.textContent = visible ? "Strike Sails" : "Open Captain's Chest";
   controlsToggleButton.setAttribute("aria-expanded", String(visible));
 }
 
