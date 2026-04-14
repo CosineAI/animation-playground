@@ -75,6 +75,29 @@ body::after {
   backdrop-filter: blur(8px);
 }
 
+#cat-card {
+  position: fixed;
+  top: 4.4rem;
+  right: 0.9rem;
+  z-index: 25;
+  width: min(24vw, 220px);
+  border: 1px solid rgba(201, 159, 91, 0.5);
+  background: rgba(35, 20, 10, 0.84);
+  box-shadow: inset 0 0 0 1px rgba(255, 225, 164, 0.08);
+  border-radius: 16px;
+  padding: 0.4rem;
+  backdrop-filter: blur(8px);
+}
+
+#cat-image {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 1px solid rgba(214, 175, 109, 0.35);
+}
+
 #project-bar label {
   font-size: 0.78rem;
   font-weight: 700;
@@ -213,12 +236,19 @@ body.controls-hidden #controls {
 
 @media (max-width: 640px) {
   #project-bar,
-  #controls-toggle {
+  #controls-toggle,
+  #cat-card {
     max-width: calc(100vw - 1.8rem);
   }
 
   #project-bar {
     flex-wrap: wrap;
     border-radius: 18px;
+  }
+
+  #cat-card {
+    top: auto;
+    bottom: calc(46vh + 1.2rem);
+    width: min(42vw, 180px);
   }
 }
