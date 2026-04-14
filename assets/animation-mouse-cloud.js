@@ -8,7 +8,7 @@ export function createMouseCloudProject({ canvas, ctx, controlsRoot, getViewWidt
     baseSpeed: 85,
     sizeVariety: 0.72,
     inertia: 0.82,
-    colors: ["#1a98ff", "#7a5cff", "#ff6be6"]
+    colors: ["#f0cb78", "#a96a3c", "#5b7c8f"]
   };
 
   let palette = [];
@@ -133,7 +133,7 @@ export function createMouseCloudProject({ canvas, ctx, controlsRoot, getViewWidt
 
     const labelEl = document.createElement("label");
     labelEl.htmlFor = `${panelId}-color-${index}`;
-    labelEl.innerHTML = `<span>Color ${index + 1}</span><span>${settings.colors[index]}</span>`;
+    labelEl.innerHTML = `<span>Flag color ${index + 1}</span><span>${settings.colors[index]}</span>`;
 
     const input = document.createElement("input");
     input.type = "color";
@@ -160,19 +160,19 @@ export function createMouseCloudProject({ canvas, ctx, controlsRoot, getViewWidt
 
     const title = document.createElement("h2");
     title.className = "wave-title";
-    title.textContent = "Mouse cloud";
+    title.textContent = "Kraken mist";
     title.style.color = settings.colors[0];
     panel.appendChild(title);
 
     const tip = document.createElement("p");
     tip.className = "control-note";
-    tip.textContent = "Press spacebar to push away particles from your mouse";
+    tip.textContent = "Press the spacebar to fire a broadside and scatter the mist";
     panel.appendChild(tip);
 
-    appendRangeControl(panel, "mouse-cloud", { key: "particleCount", label: "Number of particles", min: 80, max: 1800, step: 1, integer: true });
-    appendRangeControl(panel, "mouse-cloud", { key: "baseSpeed", label: "Base speed", min: 10, max: 260, step: 1, integer: true });
-    appendRangeControl(panel, "mouse-cloud", { key: "sizeVariety", label: "Variety of sizes", min: 0, max: 1, step: 0.01, integer: false });
-    appendRangeControl(panel, "mouse-cloud", { key: "inertia", label: "Inertia", min: 0, max: 1, step: 0.01, integer: false });
+    appendRangeControl(panel, "mouse-cloud", { key: "particleCount", label: "Mist crew", min: 80, max: 1800, step: 1, integer: true });
+    appendRangeControl(panel, "mouse-cloud", { key: "baseSpeed", label: "Wind speed", min: 10, max: 260, step: 1, integer: true });
+    appendRangeControl(panel, "mouse-cloud", { key: "sizeVariety", label: "Fog variation", min: 0, max: 1, step: 0.01, integer: false });
+    appendRangeControl(panel, "mouse-cloud", { key: "inertia", label: "Hull drag", min: 0, max: 1, step: 0.01, integer: false });
 
     appendColorControl(panel, "mouse-cloud", 0);
     appendColorControl(panel, "mouse-cloud", 1);
@@ -229,7 +229,7 @@ export function createMouseCloudProject({ canvas, ctx, controlsRoot, getViewWidt
 
   return {
     id: "mouse-cloud",
-    name: "Mouse cloud",
+    name: "Kraken mist",
     hasControls: true,
     start() {
       canvas.addEventListener("pointermove", onPointerMove);
@@ -269,7 +269,7 @@ export function createMouseCloudProject({ canvas, ctx, controlsRoot, getViewWidt
       }
 
       ctx.clearRect(0, 0, viewWidth, viewHeight);
-      ctx.fillStyle = "#ffffff";
+      ctx.fillStyle = "#101a24";
       ctx.fillRect(0, 0, viewWidth, viewHeight);
 
       const sinR = Math.sin(rotation);
