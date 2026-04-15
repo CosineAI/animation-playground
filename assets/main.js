@@ -87,6 +87,7 @@ function setActiveProject(id) {
 
   activeProject?.stop?.();
   activeProject = nextProject;
+  projectSelect.value = activeProject.id;
 
   setControlsAvailability(Boolean(activeProject.hasControls));
   if (activeProject.hasControls) {
