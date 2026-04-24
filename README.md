@@ -2,6 +2,27 @@
 
 A minimal, no-build static site template — just open `index.html` and start editing.
 
+## Ode to St Lucia
+
+Saint Lucia, lantern of the winter sea,
+keeper of clear sight when the year grows dark,
+we praise the calm fire of your name.
+
+May your light rest on harbor water,
+on salt-worn hands and windows at dawn,
+on every voyager steering by a stubborn star.
+
+Teach us the bright art of endurance:
+to hold a flame without fear,
+to make of night not a prison but a sky,
+and to greet the morning with generous eyes.
+
+Let this small page remember your radiance—
+gold on the wave,
+warmth in the storm,
+and a steadfast gleam
+wherever courage must cross the dark.
+
 A static site can be deployed via the Preview on the toolbar. If you'd like to customise your own url for static sites, you can change your deployment settings under project settings. 
 
 Let's get started!
