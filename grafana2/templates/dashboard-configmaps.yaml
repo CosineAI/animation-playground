@@ -1,0 +1,16 @@
+{{- $root := . -}}
+{{- range $path, $_ := .Files.Glob "dashboards/*.json" }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "grafana2.dashboardConfigMapName" (dict "root" $root "path" $path) }}
+  labels:
+    {{- include "grafana2.labels" $root | nindent 4 }}
+    {{ $root.Values.dashboardConfig.label }}: {{ $root.Values.dashboardConfig.labelValue | quote }}
+  annotations:
+    {{ $root.Values.dashboardConfig.folderAnnotation }}: {{ $root.Values.dashboardConfig.folder | quote }}
+data:
+  {{ base $path }}: |-
+{{ $root.Files.Get $path | indent 4 }}
+{{- end }}

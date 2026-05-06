@@ -1,0 +1,120 @@
+targetCluster: staging-gcp
+
+onePassword:
+  secretName: &onePasswordSecretName cluster-staging-grafana
+  keys:
+    databaseUrl: &databaseUrlKey DB_URL
+    adminUser: &adminUserKey admin-user
+    adminPassword: &adminPasswordKey admin-password
+
+gcp:
+  projectId: staging-gcp-project
+
+dashboardConfig:
+  label: grafana_dashboard
+  labelValue: "1"
+  folder: Staging GCP
+  folderAnnotation: grafana_folder
+
+datasourceConfig:
+  label: grafana_datasource
+  labelValue: "1"
+  googleCloudMonitoring:
+    enabled: true
+    name: Google Cloud Monitoring
+    uid: gcp-cloud-monitoring
+    defaultProject: ""
+    authenticationType: gce
+  googleCloudLogging:
+    enabled: true
+    name: Google Cloud Logging
+    uid: gcp-cloud-logging
+    defaultProject: ""
+    authenticationType: gce
+    projectListFilter: ""
+    logBucketFilter: |
+      !.*/_Default
+      !.*/_Required
+
+grafana:
+  replicas: 1
+
+  image:
+    registry: docker.io
+    repository: grafana/grafana
+    tag: "13.0.1"
+
+  admin:
+    existingSecret: *onePasswordSecretName
+    userKey: *adminUserKey
+    passwordKey: *adminPasswordKey
+
+  envValueFrom:
+    GF_DATABASE_URL:
+      secretKeyRef:
+        name: *onePasswordSecretName
+        key: *databaseUrlKey
+
+  grafana.ini:
+    analytics:
+      reporting_enabled: false
+      check_for_updates: true
+    database:
+      type: postgres
+      url: $__env{GF_DATABASE_URL}
+    log:
+      mode: console
+    security:
+      cookie_secure: true
+    server:
+      enable_gzip: true
+
+  plugins:
+    - googlecloud-logging-datasource@1.6.3
+
+  persistence:
+    enabled: false
+    disableWarning: true
+
+  service:
+    type: ClusterIP
+    port: 80
+
+  ingress:
+    enabled: false
+
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      memory: 1Gi
+
+  serviceAccount:
+    create: true
+    automountServiceAccountToken: true
+    annotations: {}
+
+  rbac:
+    create: true
+    namespaced: true
+
+  sidecar:
+    dashboards:
+      enabled: true
+      label: grafana_dashboard
+      labelValue: "1"
+      folderAnnotation: grafana_folder
+      searchNamespace: null
+      provider:
+        allowUiUpdates: false
+        disableDelete: false
+        foldersFromFilesStructure: true
+    datasources:
+      enabled: true
+      label: grafana_datasource
+      labelValue: "1"
+      searchNamespace: null
+
+  testFramework:
+    enabled: true

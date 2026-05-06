@@ -1,0 +1,23 @@
+gcp:
+  projectId: staging-gcp-project
+
+datasourceConfig:
+  googleCloudMonitoring:
+    defaultProject: staging-gcp-project
+  googleCloudLogging:
+    defaultProject: staging-gcp-project
+
+grafana:
+  replicas: 2
+  headlessService: true
+  grafana.ini:
+    unified_alerting:
+      enabled: true
+      ha_listen_address: ${POD_IP}:9094
+      ha_advertise_address: ${POD_IP}:9094
+      rule_version_record_limit: "5"
+    alerting:
+      enabled: false
+  serviceAccount:
+    annotations:
+      iam.gke.io/gcp-service-account: grafana-staging@staging-gcp-project.iam.gserviceaccount.com

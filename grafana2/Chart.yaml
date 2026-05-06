@@ -1,0 +1,10 @@
+apiVersion: v2
+name: grafana2
+description: Grafana deployment for the staging GCP cluster with dashboards managed as code.
+type: application
+version: 0.1.0
+appVersion: "13.0.1"
+dependencies:
+  - name: grafana
+    version: 12.3.0
+    repository: https://grafana-community.github.io/helm-charts
