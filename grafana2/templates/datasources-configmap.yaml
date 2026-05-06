@@ -1,0 +1,40 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "grafana2.fullname" . }}-datasources
+  labels:
+    {{- include "grafana2.labels" . | nindent 4 }}
+    {{ .Values.datasourceConfig.label }}: {{ .Values.datasourceConfig.labelValue | quote }}
+data:
+  datasources.yaml: |-
+    apiVersion: 1
+    datasources:
+    {{- if .Values.datasourceConfig.googleCloudMonitoring.enabled }}
+      - name: {{ .Values.datasourceConfig.googleCloudMonitoring.name | quote }}
+        uid: {{ .Values.datasourceConfig.googleCloudMonitoring.uid | quote }}
+        type: stackdriver
+        access: proxy
+        isDefault: true
+        jsonData:
+          authenticationType: {{ .Values.datasourceConfig.googleCloudMonitoring.authenticationType | quote }}
+          defaultProject: {{ default .Values.gcp.projectId .Values.datasourceConfig.googleCloudMonitoring.defaultProject | quote }}
+        editable: false
+    {{- end }}
+    {{- if .Values.datasourceConfig.googleCloudLogging.enabled }}
+      - name: {{ .Values.datasourceConfig.googleCloudLogging.name | quote }}
+        uid: {{ .Values.datasourceConfig.googleCloudLogging.uid | quote }}
+        type: googlecloud-logging-datasource
+        access: proxy
+        jsonData:
+          authenticationType: {{ .Values.datasourceConfig.googleCloudLogging.authenticationType | quote }}
+          defaultProject: {{ default .Values.gcp.projectId .Values.datasourceConfig.googleCloudLogging.defaultProject | quote }}
+          {{- with .Values.datasourceConfig.googleCloudLogging.projectListFilter }}
+          projectListFilter: |-
+{{ . | indent 12 }}
+          {{- end }}
+          {{- with .Values.datasourceConfig.googleCloudLogging.logBucketFilter }}
+          logBucketFilter: |-
+{{ . | indent 12 }}
+          {{- end }}
+        editable: false
+    {{- end }}

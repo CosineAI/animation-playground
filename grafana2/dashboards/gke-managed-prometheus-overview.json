@@ -1,0 +1,336 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": false,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {
+        "type": "stackdriver",
+        "uid": "gcp-cloud-monitoring"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "stackdriver",
+            "uid": "gcp-cloud-monitoring"
+          },
+          "metricQuery": {
+            "alignmentPeriod": "cloud-monitoring-auto",
+            "crossSeriesReducer": "REDUCE_MEAN",
+            "filters": [],
+            "groupBys": [
+              "resource.label.cluster_name",
+              "resource.label.namespace_name"
+            ],
+            "metricKind": "GAUGE",
+            "metricType": "prometheus.googleapis.com/container_cpu_usage_seconds_total/counter",
+            "perSeriesAligner": "ALIGN_RATE",
+            "projectName": "$project",
+            "unit": "1"
+          },
+          "queryType": "metrics",
+          "refId": "A"
+        }
+      ],
+      "title": "GKE CPU usage from managed Prometheus",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "stackdriver",
+        "uid": "gcp-cloud-monitoring"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "stackdriver",
+            "uid": "gcp-cloud-monitoring"
+          },
+          "metricQuery": {
+            "alignmentPeriod": "cloud-monitoring-auto",
+            "crossSeriesReducer": "REDUCE_MEAN",
+            "filters": [],
+            "groupBys": [
+              "resource.label.cluster_name",
+              "resource.label.namespace_name"
+            ],
+            "metricKind": "GAUGE",
+            "metricType": "prometheus.googleapis.com/container_memory_working_set_bytes/gauge",
+            "perSeriesAligner": "ALIGN_MEAN",
+            "projectName": "$project",
+            "unit": "By"
+          },
+          "queryType": "metrics",
+          "refId": "A"
+        }
+      ],
+      "title": "GKE memory working set from managed Prometheus",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "stackdriver",
+        "uid": "gcp-cloud-monitoring"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 8
+      },
+      "id": 3,
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "stackdriver",
+            "uid": "gcp-cloud-monitoring"
+          },
+          "metricQuery": {
+            "alignmentPeriod": "cloud-monitoring-auto",
+            "crossSeriesReducer": "REDUCE_SUM",
+            "filters": [],
+            "groupBys": [
+              "resource.label.cluster_name",
+              "resource.label.namespace_name"
+            ],
+            "metricKind": "GAUGE",
+            "metricType": "kubernetes.io/pod/volume/total_bytes",
+            "perSeriesAligner": "ALIGN_MEAN",
+            "projectName": "$project",
+            "unit": "By"
+          },
+          "queryType": "metrics",
+          "refId": "A"
+        }
+      ],
+      "title": "GKE pod volume capacity",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "googlecloud-logging-datasource",
+        "uid": "gcp-cloud-logging"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 8
+      },
+      "id": 4,
+      "options": {
+        "dedupStrategy": "none",
+        "enableLogDetails": true,
+        "prettifyLogMessage": false,
+        "showCommonLabels": false,
+        "showLabels": false,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "googlecloud-logging-datasource",
+            "uid": "gcp-cloud-logging"
+          },
+          "query": "resource.type=\"k8s_container\"\nresource.labels.cluster_name=~\"$cluster\"\nseverity>=WARNING",
+          "refId": "A"
+        }
+      ],
+      "title": "Recent GKE warnings and errors",
+      "type": "logs"
+    }
+  ],
+  "refresh": "1m",
+  "schemaVersion": 41,
+  "tags": [
+    "gcp",
+    "gke",
+    "managed-prometheus",
+    "staging"
+  ],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": false,
+          "text": "staging-gcp-project",
+          "value": "staging-gcp-project"
+        },
+        "hide": 0,
+        "label": "GCP project",
+        "name": "project",
+        "options": [
+          {
+            "selected": true,
+            "text": "staging-gcp-project",
+            "value": "staging-gcp-project"
+          }
+        ],
+        "query": "staging-gcp-project",
+        "type": "constant"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": ".*",
+          "value": ".*"
+        },
+        "hide": 0,
+        "label": "GKE cluster regex",
+        "name": "cluster",
+        "options": [
+          {
+            "selected": true,
+            "text": ".*",
+            "value": ".*"
+          }
+        ],
+        "query": ".*",
+        "type": "constant"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Staging GCP Kubernetes overview",
+  "uid": "staging-gcp-kubernetes-overview",
+  "version": 1,
+  "weekStart": ""
+}
