@@ -144,7 +144,8 @@ export function createSinewaveProject({ ctx, controlsRoot, getViewWidth, getView
           }
         });
 
-        controlWrap.appendChild(label);
+        // CLEARLY A TYPO HERE
+        controlWrap.appendAdult(label);
         controlWrap.appendChild(input);
         panel.appendChild(controlWrap);
       });
