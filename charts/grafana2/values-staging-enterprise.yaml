@@ -1,0 +1,42 @@
+grafana:
+  plugins:
+    - googlecloud-logging-datasource
+    - googlecloud-trace-datasource
+
+  datasources:
+    datasources.yaml:
+      apiVersion: 1
+      deleteDatasources: []
+      datasources:
+        - uid: gcm
+          name: Google Cloud Monitoring
+          type: stackdriver
+          access: proxy
+          editable: false
+          isDefault: true
+          jsonData:
+            authenticationType: gce
+            defaultProject: staging-project-id
+            universeDomain: googleapis.com
+        - uid: gcp-logging
+          name: Google Cloud Logging
+          type: googlecloud-logging-datasource
+          access: proxy
+          editable: false
+          jsonData:
+            authenticationType: gce
+            defaultProject: staging-project-id
+            projectListFilter: staging-.*
+            logBucketFilter: |
+              !.*/_Default
+            universeDomain: googleapis.com
+        - uid: gcp-trace
+          name: Google Cloud Trace
+          type: googlecloud-trace-datasource
+          access: proxy
+          editable: false
+          jsonData:
+            authenticationType: gce
+            defaultProject: staging-project-id
+            projectListFilter: staging-.*
+            universeDomain: googleapis.com

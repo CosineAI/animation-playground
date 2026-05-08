@@ -1,0 +1,110 @@
+onePassword:
+  createItem: false
+  existingSecretName: grafana2-secrets
+  itemName: grafana2-secrets
+  vault: ""
+  autoRestart: true
+
+dashboarding:
+  folder: gcp
+
+grafana:
+  fullnameOverride: grafana2
+
+  image:
+    tag: 13.0.1
+
+  admin:
+    existingSecret: grafana2-secrets
+
+  envFromSecret: grafana2-secrets
+
+  serviceAccount:
+    create: true
+    name: grafana2
+    annotations: {}
+
+  rbac:
+    create: true
+    namespaced: true
+
+  service:
+    type: ClusterIP
+
+  ingress:
+    enabled: false
+    ingressClassName: gce
+    hosts:
+      - grafana.example.internal
+    path: /
+    pathType: Prefix
+    annotations: {}
+    tls: []
+
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: 1
+      memory: 1Gi
+
+  persistence:
+    enabled: false
+    disableWarning: true
+
+  plugins: []
+
+  grafana.ini:
+    analytics:
+      reporting_enabled: false
+      check_for_updates: true
+      check_for_plugin_updates: true
+    database:
+      type: postgres
+      url: $__env{DB_URL}
+    log:
+      mode: console
+    paths:
+      provisioning: /etc/grafana/provisioning
+    security:
+      cookie_secure: true
+    server:
+      domain: grafana.example.internal
+      root_url: "%(protocol)s://%(domain)s/"
+    users:
+      viewers_can_edit: false
+
+  datasources:
+    datasources.yaml:
+      apiVersion: 1
+      deleteDatasources: []
+      datasources:
+        - uid: gcm
+          name: Google Cloud Monitoring
+          type: stackdriver
+          access: proxy
+          editable: false
+          isDefault: true
+          jsonData:
+            authenticationType: gce
+            defaultProject: project-id
+            universeDomain: googleapis.com
+
+  sidecar:
+    dashboards:
+      enabled: true
+      searchNamespace: null
+      folder: /tmp/dashboards
+      folderAnnotation: grafana_folder
+      provider:
+        allowUiUpdates: false
+        disableDelete: false
+        foldersFromFilesStructure: false
+    datasources:
+      enabled: false
+
+  serviceMonitor:
+    enabled: true
+    interval: 1m
+    scrapeTimeout: 30s
