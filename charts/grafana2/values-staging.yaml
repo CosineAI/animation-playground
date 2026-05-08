@@ -1,0 +1,42 @@
+onePassword:
+  existingSecretName: cluster-staging-grafana
+  itemName: cluster-staging-grafana
+
+dashboarding:
+  folder: staging-gcp
+
+grafana:
+  admin:
+    existingSecret: cluster-staging-grafana
+
+  envFromSecret: cluster-staging-grafana
+
+  ingress:
+    enabled: true
+    hosts:
+      - grafana.staging.example.internal
+
+  serviceAccount:
+    annotations:
+      iam.gke.io/gcp-service-account: grafana-staging@staging-project-id.iam.gserviceaccount.com
+
+  grafana.ini:
+    server:
+      domain: grafana.staging.example.internal
+      root_url: https://grafana.staging.example.internal/
+
+  datasources:
+    datasources.yaml:
+      apiVersion: 1
+      deleteDatasources: []
+      datasources:
+        - uid: gcm
+          name: Google Cloud Monitoring
+          type: stackdriver
+          access: proxy
+          editable: false
+          isDefault: true
+          jsonData:
+            authenticationType: gce
+            defaultProject: staging-project-id
+            universeDomain: googleapis.com

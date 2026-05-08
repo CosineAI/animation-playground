@@ -1,0 +1,20 @@
+{{- range $path, $_ := .Files.Glob "dashboards/*.json" }}
+{{- $base := base $path }}
+{{- $name := $base | trimSuffix ".json" | lower | replace "_" "-" | replace "." "-" }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ printf "%s-%s" (include "grafana2.fullname" $) $name | trunc 63 | trimSuffix "-" }}
+  labels:
+    app.kubernetes.io/name: {{ include "grafana2.name" $ }}
+    helm.sh/chart: {{ include "grafana2.chart" $ }}
+    app.kubernetes.io/instance: {{ $.Release.Name }}
+    app.kubernetes.io/managed-by: {{ $.Release.Service }}
+    grafana_dashboard: "1"
+  annotations:
+    grafana_folder: {{ $.Values.dashboarding.folder | quote }}
+data:
+  {{ $base }}: |-
+{{ $.Files.Get $path | nindent 4 }}
+---
+{{- end }}
