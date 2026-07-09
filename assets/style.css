@@ -4,6 +4,15 @@ html, body {
   padding: 0;
 }
 
+:root {
+  --rainbow-red: rgba(255, 112, 112, 0.75);
+  --rainbow-orange: rgba(255, 176, 89, 0.7);
+  --rainbow-yellow: rgba(255, 232, 132, 0.66);
+  --rainbow-green: rgba(116, 222, 143, 0.62);
+  --rainbow-blue: rgba(104, 183, 255, 0.66);
+  --rainbow-violet: rgba(190, 142, 255, 0.7);
+}
+
 html {
   background:
     radial-gradient(circle at top, rgba(255, 226, 163, 0.14), transparent 34%),
@@ -73,6 +82,33 @@ body::after {
   border-radius: 999px;
   padding: 0.48rem 0.9rem;
   backdrop-filter: blur(8px);
+}
+
+#project-bar,
+#controls-toggle {
+  overflow: hidden;
+}
+
+#project-bar::before,
+#controls-toggle::before {
+  content: "";
+  position: absolute;
+  left: 0.75rem;
+  right: 0.75rem;
+  top: 0;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    var(--rainbow-red),
+    var(--rainbow-orange),
+    var(--rainbow-yellow),
+    var(--rainbow-green),
+    var(--rainbow-blue),
+    var(--rainbow-violet)
+  );
+  opacity: 0.72;
+  pointer-events: none;
 }
 
 #project-bar label {
@@ -153,6 +189,14 @@ body.controls-hidden #controls {
 
 .wave-panel {
   background:
+    linear-gradient(
+      90deg,
+      rgba(255, 112, 112, 0.26),
+      rgba(255, 232, 132, 0.22),
+      rgba(116, 222, 143, 0.2),
+      rgba(104, 183, 255, 0.22),
+      rgba(190, 142, 255, 0.24)
+    ) top / 100% 2px no-repeat,
     linear-gradient(180deg, rgba(108, 69, 35, 0.52), rgba(43, 26, 14, 0.92)),
     rgba(32, 18, 9, 0.9);
   border: 1px solid rgba(189, 147, 79, 0.38);
