@@ -1,4 +1,4 @@
-import { TAU, hexToRgb } from "./utils.js";
+import { TAU, hexToRgb, hslToHex } from "./utils.js";
 
 export function createSinewaveProject({ ctx, controlsRoot, getViewWidth, getViewHeight }) {
   const waves = [
@@ -12,7 +12,10 @@ export function createSinewaveProject({ ctx, controlsRoot, getViewWidth, getView
       particleCount: 90,
       xOffset: 0,
       yOffset: -55,
-      particles: []
+      particles: [],
+      rainbowMode: false,
+      rainbowSpeed: 0.3,
+      hueOffset: 0
     },
     {
       name: "Moonlit reef",
@@ -24,7 +27,10 @@ export function createSinewaveProject({ ctx, controlsRoot, getViewWidth, getView
       particleCount: 75,
       xOffset: 36,
       yOffset: -16,
-      particles: []
+      particles: [],
+      rainbowMode: false,
+      rainbowSpeed: 0.3,
+      hueOffset: 90
     },
     {
       name: "Corsair current",
@@ -36,7 +42,10 @@ export function createSinewaveProject({ ctx, controlsRoot, getViewWidth, getView
       particleCount: 65,
       xOffset: -48,
       yOffset: 22,
-      particles: []
+      particles: [],
+      rainbowMode: false,
+      rainbowSpeed: 0.3,
+      hueOffset: 180
     },
     {
       name: "Sunken gold",
@@ -48,7 +57,10 @@ export function createSinewaveProject({ ctx, controlsRoot, getViewWidth, getView
       particleCount: 55,
       xOffset: 72,
       yOffset: 58,
-      particles: []
+      particles: [],
+      rainbowMode: false,
+      rainbowSpeed: 0.3,
+      hueOffset: 270
     }
   ];
 
@@ -149,6 +161,52 @@ export function createSinewaveProject({ ctx, controlsRoot, getViewWidth, getView
         panel.appendChild(controlWrap);
       });
 
+      const rainbowWrap = document.createElement("div");
+      rainbowWrap.className = "control-group";
+
+      const rainbowLabel = document.createElement("label");
+      rainbowLabel.htmlFor = `wave-${waveIndex}-rainbowMode`;
+      rainbowLabel.innerHTML = `<span>Rainbow mode</span>`;
+
+      const rainbowCheck = document.createElement("input");
+      rainbowCheck.type = "checkbox";
+      rainbowCheck.id = `wave-${waveIndex}-rainbowMode`;
+      rainbowCheck.checked = wave.rainbowMode;
+
+      rainbowCheck.addEventListener("change", () => {
+        wave.rainbowMode = rainbowCheck.checked;
+      });
+
+      rainbowWrap.appendChild(rainbowLabel);
+      rainbowWrap.appendChild(rainbowCheck);
+      panel.appendChild(rainbowWrap);
+
+      const rainbowSpeedWrap = document.createElement("div");
+      rainbowSpeedWrap.className = "control-group";
+
+      const rainbowSpeedLabel = document.createElement("label");
+      rainbowSpeedLabel.htmlFor = `wave-${waveIndex}-rainbowSpeed`;
+      rainbowSpeedLabel.innerHTML = `<span>Rainbow shift</span><span>${wave.rainbowSpeed.toFixed(2)}</span>`;
+
+      const rainbowSpeedInput = document.createElement("input");
+      rainbowSpeedInput.type = "range";
+      rainbowSpeedInput.id = `wave-${waveIndex}-rainbowSpeed`;
+      rainbowSpeedInput.min = "0.05";
+      rainbowSpeedInput.max = "2.0";
+      rainbowSpeedInput.step = "0.05";
+      rainbowSpeedInput.value = String(wave.rainbowSpeed);
+      rainbowSpeedInput.style.accentColor = wave.color;
+
+      rainbowSpeedInput.addEventListener("input", () => {
+        const nextValue = Number.parseFloat(rainbowSpeedInput.value);
+        wave.rainbowSpeed = nextValue;
+        rainbowSpeedLabel.lastElementChild.textContent = nextValue.toFixed(2);
+      });
+
+      rainbowSpeedWrap.appendChild(rainbowSpeedLabel);
+      rainbowSpeedWrap.appendChild(rainbowSpeedInput);
+      panel.appendChild(rainbowSpeedWrap);
+
       controlsRoot.appendChild(panel);
     });
   }
@@ -246,6 +304,15 @@ export function createSinewaveProject({ ctx, controlsRoot, getViewWidth, getView
       ctx.clearRect(0, 0, viewWidth, viewHeight);
       ctx.fillStyle = "#0d1b2a";
       ctx.fillRect(0, 0, viewWidth, viewHeight);
+
+      for (let i = 0; i < waves.length; i += 1) {
+        const wave = waves[i];
+        if (wave.rainbowMode) {
+          const hue = ((time * wave.rainbowSpeed * 60) + wave.hueOffset) % 360;
+          wave.color = hslToHex(hue, 70, 55);
+          wave.rgb = hexToRgb(wave.color);
+        }
+      }
 
       for (let i = 0; i < waves.length; i += 1) {
         drawWave(waves[i], time);

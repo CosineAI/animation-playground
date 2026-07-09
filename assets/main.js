@@ -1,6 +1,7 @@
 import { createSinewaveProject } from "./animation-sinewave.js";
 import { createSpinningParticlesProject } from "./animation-spinning-particles.js";
 import { createMouseCloudProject } from "./animation-mouse-cloud.js";
+import { createRainbowProject } from "./animation-rainbow.js";
 
 const canvas = document.getElementById("scene");
 const ctx = canvas.getContext("2d");
@@ -65,7 +66,8 @@ const environment = {
 const projects = [
   createSinewaveProject(environment),
   createSpinningParticlesProject(environment),
-  createMouseCloudProject(environment)
+  createMouseCloudProject(environment),
+  createRainbowProject(environment)
 ];
 
 function populateProjectPicker() {
