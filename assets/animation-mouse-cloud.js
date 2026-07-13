@@ -1,32 +1,22 @@
-import { TAU, hexToRgb, clamp } from "./utils.js";
+import { TAU, rainbowColor, clamp } from "./utils.js";
 
 export function createMouseCloudProject({ canvas, ctx, controlsRoot, getViewWidth, getViewHeight }) {
   const particles = [];
-  const colorAlphas = [0.75, 0.7, 0.66];
   const settings = {
     particleCount: Math.round(clamp(getViewWidth() * getViewHeight() * 0.00065, 260, 900)),
     baseSpeed: 85,
     sizeVariety: 0.72,
     inertia: 0.82,
-    colors: ["#f0cb78", "#a96a3c", "#5b7c8f"]
+    colorSpeed: 1
   };
 
-  let palette = [];
   let mouseX = getViewWidth() * 0.5;
   let mouseY = getViewHeight() * 0.5;
   let mouseActive = false;
   let rotation = 0;
   let explodeEnergy = 0;
 
-  function rebuildPalette() {
-    palette = settings.colors.map((color, index) => ({
-      rgb: hexToRgb(color),
-      alpha: colorAlphas[index]
-    }));
-  }
-
   function createParticle(index) {
-    const tint = palette[index % palette.length];
     const size = 1.4 + Math.random() * (1.8 + settings.sizeVariety * 6.4);
     const mass = 0.75 + (size / 7.6) * (0.85 + Math.random() * 1.25);
     const offsetRadius = 8 + Math.random() * 140;
@@ -38,22 +28,13 @@ export function createMouseCloudProject({ canvas, ctx, controlsRoot, getViewWidt
       vy: (Math.random() - 0.5) * settings.baseSpeed * 1.25,
       mass,
       size,
-      alpha: tint.alpha,
-      rgb: tint.rgb,
+      hueOffset: (index * 137.5) % 360,
+      alpha: 0.55 + Math.random() * 0.25,
       offsetAngle: Math.random() * TAU,
       offsetRadius,
       offsetDrift: (Math.random() - 0.5) * 2,
       spring: 7 + Math.random() * 15
     };
-  }
-
-  function applyColorsToParticles() {
-    for (let i = 0; i < particles.length; i += 1) {
-      const tint = palette[i % palette.length];
-      const particle = particles[i];
-      particle.rgb = tint.rgb;
-      particle.alpha = tint.alpha;
-    }
   }
 
   function refreshParticleSizes() {
@@ -87,7 +68,7 @@ export function createMouseCloudProject({ canvas, ctx, controlsRoot, getViewWidt
   }
 
   function formatRangeValue(key, value) {
-    if (key === "sizeVariety" || key === "inertia") {
+    if (key === "sizeVariety" || key === "inertia" || key === "colorSpeed") {
       return Number(value).toFixed(2);
     }
     return String(Math.round(value));
@@ -108,7 +89,6 @@ export function createMouseCloudProject({ canvas, ctx, controlsRoot, getViewWidt
     input.max = String(max);
     input.step = String(step);
     input.value = String(settings[key]);
-    input.style.accentColor = settings.colors[0];
 
     input.addEventListener("input", () => {
       const nextValue = integer ? Number.parseInt(input.value, 10) : Number.parseFloat(input.value);
@@ -127,31 +107,6 @@ export function createMouseCloudProject({ canvas, ctx, controlsRoot, getViewWidt
     panel.appendChild(controlWrap);
   }
 
-  function appendColorControl(panel, panelId, index) {
-    const controlWrap = document.createElement("div");
-    controlWrap.className = "control-group";
-
-    const labelEl = document.createElement("label");
-    labelEl.htmlFor = `${panelId}-color-${index}`;
-    labelEl.innerHTML = `<span>Flag color ${index + 1}</span><span>${settings.colors[index]}</span>`;
-
-    const input = document.createElement("input");
-    input.type = "color";
-    input.id = `${panelId}-color-${index}`;
-    input.value = settings.colors[index];
-
-    input.addEventListener("input", () => {
-      settings.colors[index] = input.value;
-      labelEl.lastElementChild.textContent = input.value;
-      rebuildPalette();
-      applyColorsToParticles();
-    });
-
-    controlWrap.appendChild(labelEl);
-    controlWrap.appendChild(input);
-    panel.appendChild(controlWrap);
-  }
-
   function createControls() {
     controlsRoot.innerHTML = "";
 
@@ -161,7 +116,6 @@ export function createMouseCloudProject({ canvas, ctx, controlsRoot, getViewWidt
     const title = document.createElement("h2");
     title.className = "wave-title";
     title.textContent = "Kraken mist";
-    title.style.color = settings.colors[0];
     panel.appendChild(title);
 
     const tip = document.createElement("p");
@@ -173,10 +127,7 @@ export function createMouseCloudProject({ canvas, ctx, controlsRoot, getViewWidt
     appendRangeControl(panel, "mouse-cloud", { key: "baseSpeed", label: "Wind speed", min: 10, max: 260, step: 1, integer: true });
     appendRangeControl(panel, "mouse-cloud", { key: "sizeVariety", label: "Fog variation", min: 0, max: 1, step: 0.01, integer: false });
     appendRangeControl(panel, "mouse-cloud", { key: "inertia", label: "Hull drag", min: 0, max: 1, step: 0.01, integer: false });
-
-    appendColorControl(panel, "mouse-cloud", 0);
-    appendColorControl(panel, "mouse-cloud", 1);
-    appendColorControl(panel, "mouse-cloud", 2);
+    appendRangeControl(panel, "mouse-cloud", { key: "colorSpeed", label: "Rainbow speed", min: 0, max: 5, step: 0.1, integer: false });
 
     controlsRoot.appendChild(panel);
   }
@@ -224,7 +175,6 @@ export function createMouseCloudProject({ canvas, ctx, controlsRoot, getViewWidt
     }
   }
 
-  rebuildPalette();
   seedParticles();
 
   return {
@@ -327,7 +277,8 @@ export function createMouseCloudProject({ canvas, ctx, controlsRoot, getViewWidt
         }
 
         ctx.beginPath();
-        ctx.fillStyle = `rgba(${particle.rgb.r}, ${particle.rgb.g}, ${particle.rgb.b}, ${particle.alpha})`;
+        const rgb = rainbowColor(particle.hueOffset, time, settings.colorSpeed);
+        ctx.fillStyle = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${particle.alpha})`;
         ctx.arc(particle.x, particle.y, particle.size, 0, TAU);
         ctx.fill();
       }

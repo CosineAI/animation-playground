@@ -1,10 +1,12 @@
-import { TAU, hexToRgb } from "./utils.js";
+import { TAU, rainbowColor } from "./utils.js";
 
 export function createSinewaveProject({ ctx, controlsRoot, getViewWidth, getViewHeight }) {
   const waves = [
     {
       name: "Crimson tide",
       color: "#d35b3f",
+      hueOffset: 0,
+      colorSpeed: 1,
       amplitude: 72,
       wavelength: 380,
       speed: 0.22,
@@ -17,6 +19,8 @@ export function createSinewaveProject({ ctx, controlsRoot, getViewWidth, getView
     {
       name: "Moonlit reef",
       color: "#d2bf8a",
+      hueOffset: 90,
+      colorSpeed: 1,
       amplitude: 58,
       wavelength: 300,
       speed: 0.16,
@@ -29,6 +33,8 @@ export function createSinewaveProject({ ctx, controlsRoot, getViewWidth, getView
     {
       name: "Corsair current",
       color: "#78a7a6",
+      hueOffset: 180,
+      colorSpeed: 1,
       amplitude: 45,
       wavelength: 450,
       speed: 0.1,
@@ -41,6 +47,8 @@ export function createSinewaveProject({ ctx, controlsRoot, getViewWidth, getView
     {
       name: "Sunken gold",
       color: "#f1c979",
+      hueOffset: 270,
+      colorSpeed: 1,
       amplitude: 35,
       wavelength: 260,
       speed: 0.06,
@@ -56,6 +64,7 @@ export function createSinewaveProject({ ctx, controlsRoot, getViewWidth, getView
     { key: "amplitude", label: "Swell height", min: 10, max: 220, step: 1, integer: true },
     { key: "wavelength", label: "Tide length", min: 80, max: 900, step: 1, integer: true },
     { key: "speed", label: "Current speed", min: 0.02, max: 1.2, step: 0.01, integer: false },
+    { key: "colorSpeed", label: "Rainbow speed", min: 0, max: 5, step: 0.1, integer: false },
     { key: "glow", label: "Lantern glow", min: 0, max: 60, step: 1, integer: true },
     { key: "particleCount", label: "Sea spray", min: 0, max: 300, step: 1, integer: true },
     { key: "yOffset", label: "Deck rise", min: -350, max: 350, step: 1, integer: true },
@@ -166,17 +175,20 @@ export function createSinewaveProject({ ctx, controlsRoot, getViewWidth, getView
   }
 
   function drawWave(wave, time) {
+    const rgb = rainbowColor(wave.hueOffset, time, wave.colorSpeed);
+    const colorString = `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
+
     traceWavePath(wave, time);
     ctx.lineWidth = 6;
-    ctx.strokeStyle = wave.color;
+    ctx.strokeStyle = colorString;
     ctx.globalAlpha = 0.28;
-    ctx.shadowColor = wave.color;
+    ctx.shadowColor = colorString;
     ctx.shadowBlur = wave.glow;
     ctx.stroke();
 
     traceWavePath(wave, time);
     ctx.lineWidth = 1.8;
-    ctx.strokeStyle = wave.color;
+    ctx.strokeStyle = colorString;
     ctx.globalAlpha = 0.9;
     ctx.shadowBlur = Math.max(0, wave.glow * 0.4);
     ctx.stroke();
@@ -187,7 +199,7 @@ export function createSinewaveProject({ ctx, controlsRoot, getViewWidth, getView
   }
 
   function updateAndDrawParticles(wave, time, deltaSeconds) {
-    const rgb = wave.rgb;
+    const rgb = rainbowColor(wave.hueOffset, time, wave.colorSpeed);
     const baseFlow = 36 + wave.speed * 120;
 
     for (let i = 0; i < wave.particles.length; i += 1) {
@@ -224,7 +236,6 @@ export function createSinewaveProject({ ctx, controlsRoot, getViewWidth, getView
   }
 
   for (let i = 0; i < waves.length; i += 1) {
-    waves[i].rgb = hexToRgb(waves[i].color);
     syncParticleCount(waves[i]);
   }
 

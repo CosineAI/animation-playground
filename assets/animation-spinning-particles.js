@@ -1,13 +1,7 @@
-import { TAU, hexToRgb, clamp } from "./utils.js";
+import { TAU, rainbowColor, clamp } from "./utils.js";
 
 export function createSpinningParticlesProject({ canvas, ctx, getViewWidth, getViewHeight }) {
   const particles = [];
-  const palette = [
-    { rgb: hexToRgb("#d8b36b"), alpha: 0.75 },
-    { rgb: hexToRgb("#7f5b3a"), alpha: 0.66 },
-    { rgb: hexToRgb("#3b6176"), alpha: 0.62 },
-    { rgb: hexToRgb("#f2e0b3"), alpha: 0.58 }
-  ];
 
   let rotation = 0;
   let rotationVelocity = 0.45;
@@ -101,18 +95,17 @@ export function createSpinningParticlesProject({ canvas, ctx, getViewWidth, getV
       const baseX = Math.sin(phi) * Math.cos(theta);
       const baseY = Math.cos(phi);
       const baseZ = Math.sin(phi) * Math.sin(theta);
-      const tint = palette[i % palette.length];
 
       particles.push({
         baseX,
         baseY,
         baseZ,
+        hueOffset: (i * 137.5) % 360,
         wobbleSpeed: 0.6 + Math.random() * 1.8,
         wobblePhase: Math.random() * TAU,
         drift: 0.2 + Math.random() * 0.85,
         size: 0.85 + Math.random() * 1.8,
-        alpha: tint.alpha,
-        rgb: tint.rgb,
+        alpha: 0.55 + Math.random() * 0.25,
         radiusFactor: 1,
         radiusVelocity: 0,
         spring: 5 + Math.random() * 4.5,
@@ -231,9 +224,10 @@ export function createSpinningParticlesProject({ canvas, ctx, getViewWidth, getV
         const y = cy + particle.screenY * scale;
         const depthFactor = clamp((particle.depth / baseRadius + 1) * 0.5, 0, 1);
         const alpha = particle.alpha * (0.35 + depthFactor * 0.65);
+        const rgb = rainbowColor(particle.hueOffset, time, 0.5);
 
         ctx.beginPath();
-        ctx.fillStyle = `rgba(${particle.rgb.r}, ${particle.rgb.g}, ${particle.rgb.b}, ${alpha})`;
+        ctx.fillStyle = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha})`;
         ctx.arc(x, y, particle.size * scale * (0.75 + depthFactor * 0.8), 0, TAU);
         ctx.fill();
       }
